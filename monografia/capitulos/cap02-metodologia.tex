@@ -1,0 +1,82 @@
+\chapter{METODOLOGIA}
+\label{cap:metodologia}
+
+A metodologia constitui o conjunto de procedimentos sistemáticos e técnicas empregadas para conduzir uma investigação científica, definindo o caminho percorrido para alcançar os objetivos propostos e garantir a confiabilidade dos resultados obtidos. Segundo \citeonline{lakatos2017}, ``a metodologia é o conjunto das atividades sistemáticas e racionais que, com maior segurança e economia, permite alcançar o objetivo - conhecimentos válidos e verdadeiros -, traçando o caminho a ser seguido, detectando erros e auxiliando as decisões do cientista''. Assim, para o contexto do desenvolvimento de sistemas tecnológicos aplicados à gestão de eventos esportivos, a definição metodológica torna-se fundamental para estabelecer critérios rigorosos de análise, implementação e validação das soluções propostas.
+
+A complexidade multidisciplinar dos projetos contemporâneos de tecnologia demanda uma evolução das abordagens metodológicas tradicionais em direção a \textit{frameworks} híbridos que integrem rigor científico com flexibilidade adaptativa. Conforme destaca \citeonline{brown2008}, ``Design Thinking é uma disciplina que utiliza a sensibilidade e métodos do designer para encontrar/descobrir o que as pessoas necessitam, juntamente com o que é tecnologicamente praticável e o que é viável para os negócios''. Esta perspectiva complementa a metodologia tradicional ao focar na experiência do usuário e na inovação centrada no ser humano, aspectos essenciais para o desenvolvimento de sistemas efetivos em ambientes esportivos. Adicionalmente, \citeonline{souza2020} demonstram que ``a metodologia design thinking propõe soluções inovadoras dirigindo o foco às necessidades do público alvo, e a metodologia Scrum, eficiente a complementa, no sentido da organização e produção de softwares complexos''.
+
+Este trabalho caracteriza-se pela integração de múltiplas abordagens metodológicas, considerando tanto a natureza técnica do desenvolvimento de sistemas IoT quanto a necessidade de compreender profundamente o contexto organizacional do evento Descida da Ladeira. A pesquisa classifica-se como aplicada quanto à natureza, pois visa ``gerar conhecimentos para aplicação prática dirigidos à solução de problemas específicos'' \cite{prodanov2013}, e adota abordagem quali-quantitativa para contemplar tanto a análise dos requisitos funcionais quanto a mensuração de eficiência dos processos automatizados. O framework metodológico proposto integra pesquisa bibliográfica para fundamentação teórica \cite{gil2017}, Design Thinking para descoberta e definição de soluções centradas no usuário \cite{vianna2012}, e desenvolvimento ágil baseado em Scrum para implementação iterativa e validação contínua das funcionalidades do sistema.
+
+Esta pesquisa caracteriza-se, também, como exploratória, uma vez que lidar com o problema da cronometragem automatizada em eventos esportivos de pequeno e médio porte, área ainda pouco investigada no contexto acadêmico nacional. \citeonline{gil2017} esclarece que ``pesquisas exploratórias têm como propósito proporcionar maior familiaridade com o problema, com vistas a torná-lo mais explícito ou a construir hipóteses''. A natureza exploratória justifica-se pela necessidade de investigar tecnologias emergentes como redes LoRa e protocolos MQTT em contextos esportivos educacionais, além de mapear os requisitos específicos dos múltiplos stakeholders envolvidos - organizadores, participantes e espectadores - para construir uma solução tecnológica que atenda efetivamente às demandas identificadas.
+
+A escolha por metodologias ágeis no desenvolvimento deste projeto fundamenta-se na necessidade de adaptabilidade e validação contínua inerente aos projetos de inovação tecnológica aplicada. \citeonline{severino2017} ressalta que ``a metodologia científica não pode ser entendida como um conjunto de regras estáticas, mas deve adaptar-se à natureza do objeto de estudo e aos objetivos da pesquisa''. Neste sentido, a integração entre Design Thinking e Scrum permite equilibrar o planejamento estruturado com a flexibilidade necessária para ajustes em tempo real durante o desenvolvimento, característica fundamental quando se trabalha com hardware IoT e comunicação sem fio, tecnologias que frequentemente apresentam comportamentos imprevistos durante a implementação prática.
+
+A presente seção estrutura-se de forma a detalhar cada componente metodológico empregado no desenvolvimento desta pesquisa. Inicialmente, será apresentada a pesquisa bibliográfica que fundamentou teoricamente o trabalho, seguida pela descrição da aplicação do Design Thinking nas fases de descoberta e definição das soluções, e finalmente pela exposição dos procedimentos ágeis baseados em Scrum utilizados na implementação e validação do sistema. Esta organização visa demonstrar como a integração metodológica proposta viabiliza tanto o rigor científico quanto a inovação prática, atendendo simultaneamente aos requisitos acadêmicos e às demandas reais do evento esportivo estudado.
+
+\section{Pesquisa Bibliográfica}
+\label{sec:pesquisa-bibliografica}
+
+Para dar fundamento ao trabalho, realizou-se uma pesquisa bibliográfica abrangente sobre os temas relacionados ao desenvolvimento de sistemas Web com integração em componentes IoT para a gestão de eventos esportivos. Deste modo, garantimos o contato adequado com fontes seguras já estabelecidas, como \citeonline{prodanov2013} recomendam: ``A pesquisa bibliográfica coloca o pesquisador em contato direto com toda a produção escrita sobre a temática que está sendo estudada''.
+
+Todo o levantamento desta base para o trabalho foram realizados nas bases de dados do Google Scholar, livros digitais e físicos, tendo o recorte temporal priorizado a partir dos anos 2000, considerando a evolução das tecnologias Web, a gestão de eventos e os avanços em pesquisas com IoT.
+
+A pesquisa abrangendo toda bibliografia já tornada pública em relação ao tema \cite{lakatos2017}, notou-se uma lacuna significativa na literatura nacional sobre aplicações de redes LoRa em eventos esportivos de pequeno e médio porte, justificando a relevância do projeto e da pesquisa, permitindo identificar o estado e as oportunidades de contribuição científica.
+
+\section{Design Thinking}
+\label{sec:design-thinking}
+
+O Design Thinking constitui uma abordagem centrada no ser humano para a resolução criativa de problemas, amplamente adotada no desenvolvimento de produtos e serviços inovadores. \citeonline{brown2008} define Design Thinking como ``uma disciplina que usa a sensibilidade e os métodos do designer para suprir as necessidades das pessoas com o que é tecnologicamente factível'', convertendo estratégias de negócios em valor para os \textit{stakeholders}.
+
+A escolha do Design Thinking como abordagem metodológica complementar para este projeto justifica-se pela natureza inovadora da solução proposta, que demanda compreensão profunda das necessidades dos usuários do evento Descida da Ladeira e dos organizadores. Conforme destaca \citeonline{vianna2012}, o Design Thinking traz uma visão holística para a inovação através de equipes multidisciplinares que compreendem consumidores no contexto onde se encontram.
+
+O processo de Design Thinking adotado neste trabalho seguiu o modelo em cinco fases proposto pela d.school de Stanford: (1) Empatia - para compreender necessidades de competidores, organizadores e público; (2) Definição - para estabelecer claramente os problemas a serem resolvidos pelo sistema e sua integração com a IoT; (3) Ideação - para gerar alternativas de solução técnica; (4) Prototipação - para desenvolver versões testáveis do sistema; e (5) Teste - para validar a solução com usuários reais em ambiente controlado \cite{interactiondesign2025}.
+
+Cabe destacar que, conforme enfatizam \citeonline{vianna2012}, as etapas do Design Thinking possuem natureza não-linear, permitindo que sejam moldadas conforme a natureza específica do projeto. Assim, ao longo do desenvolvimento, foi possível realizar ciclos iterativos, unidos ao SCRUM, retornando a fases anteriores sempre que novos insights eram obtidos, característica fundamental desta abordagem metodológica.
+
+\section{Scrum}
+\label{sec:scrum}
+
+O Scrum, embora se enquadre como metodologia, é mais conhecido como um framework leve para gerenciamento de projetos. Amplamente utilizado para o desenvolvimento de projetos, ele ``ajuda pessoas, equipes e organizações a gerar valor através de soluções adaptativas para problemas complexos'' \cite{schwaber2020}.
+
+A escolha deste framework para se alinhar com o desenvolvimento do projeto, munido da metodologia de Design Thinking, justifica-se pela natureza iterativa e incremental do trabalho, onde os requisitos e solicitações foram se refinando ao longo do processo de desenvolvimento. Assim, o Scrum possibilitou a entrega funcional, ainda que parcial, que puderam ser validadas pelos \textit{stakeholders} do evento Descida da Ladeira, bem como da defesa deste material de estudo.
+
+A compreensão do Scrum é simples, pois se baseia em três responsabilidades fundamentais dentro da equipe que participam do projeto onde, segundo \citeonline{schwaber2020} são: (1) o \textit{Product Owner} ou Dono do Produto que é responsável por maximizar o valor do produto resultante do trabalho do time; (2) o \textit{Scrum Master} responsável por ajudar todos do time a entenderem a teoria e a prática do Scrum; e (3) os Desenvolvedores responsáveis por criar o plano da sprint e garantir a qualidade do produto. Assim, neste projeto, definimos estas responsabilidades do PO para o orientador, que possui o contato com os organizadores do evento, tendo a plena capacidade de definir as prioridades e validar as entregas. Já as duas outras responsabilidades foram rotativas durante todo o projeto entre os integrantes de defesa do material de estudo, definindo semanalmente os papéis de cada um para aquela \textit{sprint}.
+
+O método incremental que o Scrum adota, compõe-se de quatro atividades a serem realizadas: \textit{Sprint Planning} que definirá um planejamento do ciclo; \textit{Daily Scrums} sendo as reuniões diárias de no máximo quinze minutos; \textit{Sprint Review} uma reunião semanal para discutir os avanços; e o \textit{Sprint Retrospective} que visa trazer reflexões e validações do orientador para a melhoria do processo.
+
+Ainda conforme \citeonline{schwaber2020} o Scrum possui alguns artefatos, que para o projeto foram escolhidos três, sendo: o \textit{Product Backlog} - uma listagem com prioridade das funcionalidades a serem implementadas; o \textit{Sprint Backlog} - como um subconjunto da primeira lista com itens selecionados para o ciclo de Sprint; e o \textit{Increment}, entregue em \textit{releases} do Github, como versões funcionais do produto gerado no fim de cada sprint.
+
+\section{Cronograma}
+\label{sec:cronograma}
+
+O cronograma de desenvolvimento do projeto foi estruturado para contemplar todas as fases metodológicas propostas, distribuídas ao longo de dois semestres acadêmicos conforme apresentado no Quadro \ref{quad:cronograma}.
+
+\begin{quadro}[htb]
+\caption{\label{quad:cronograma}Cronograma de desenvolvimento do projeto}
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+\multirow{2}{*}{\textbf{Tarefas}} & \multicolumn{5}{c|}{\textbf{2025 - Semestre 2}} & \multicolumn{7}{c|}{\textbf{2026 - Semestre 1}} \\ \cline{2-13}
+ & \textbf{8} & \textbf{9} & \textbf{10} & \textbf{11} & \textbf{12} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} & \textbf{6} & \textbf{7} \\ \hline
+Busca de tema, imersão com o orientador & X & X & & & & & & & & & & \\ \hline
+Imersão: Conhecer o problema & & X & X & & & & & & & & & \\ \hline
+Ideação: Proposta de solução & & & X & X & & & & & & & & \\ \hline
+Pesquisa e escrita de introdução & & & X & X & X & & & & & & & \\ \hline
+Pesquisa e escrita do referencial teórico & & & & X & X & X & & & & & & \\ \hline
+Escrita do capítulo de desenvolvimento & & & & & X & X & X & & & & & \\ \hline
+Prototipação: Elaboração de diagramas & & & & & & X & X & X & & & & \\ \hline
+Escrita do capítulo de resultados & & & & & & & X & X & X & & & \\ \hline
+Testes de bancada & & & & & & & & X & X & & & \\ \hline
+Escrita: documento TG1 & & & & & & & & & X & X & & \\ \hline
+Qualificação do TG1 (banca) & & & & & & & & & & X & & \\ \hline
+Desenvolvimento do sistema backend/frontend & & & & & & & & & & X & X & X \\ \hline
+Teste no evento com o público-alvo & & & & & & & & & & & X & \\ \hline
+Adaptações e correções & & & & & & & & & & & X & X \\ \hline
+Escrita: documento TG2 & & & & & & & & & & & X & X \\ \hline
+Entrega e Defesa do TG2 & & & & & & & & & & & & X \\ \hline
+\end{tabular}%
+}
+\end{center}
+\fonte{Dos próprios autores (2025).}
+\end{quadro}

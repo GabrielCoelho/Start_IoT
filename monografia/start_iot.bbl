@@ -1,0 +1,41 @@
+\providecommand{\abntreprintinfo}[1]{%
+ \citeonline{#1}}
+\setlength{\labelsep}{0pt}\begin{thebibliography}{}
+\providecommand{\abntrefinfo}[3]{}
+\providecommand{\abntbstabout}[1]{}
+\abntbstabout{v-1.9.7 }
+
+\bibitem[{AWS Sports} 2025]{awssports2025}
+\abntrefinfo{{AWS Sports}}{{AWS Sports}}{2025}
+{{AWS Sports}. \emph{F1 Insights powered by AWS}. 2025.
+Dispon{\'\i}vel em: \url{https://aws.amazon.com/sports/f1/}. Acesso em: 02 out.
+  2025.}
+
+\bibitem[{Catapult} 2025]{catapult2025}
+\abntrefinfo{{Catapult}}{{Catapult}}{2025}
+{{Catapult}. \emph{How Data Analysis Transforms F1 Race Performance}. 2025.
+Dispon{\'\i}vel em:
+  \url{https://www.catapult.com/blog/f1-data-analysis-transforming-performance}.
+  Acesso em: 02 out. 2025.}
+
+\bibitem[{DTB NFC} 2025]{dtbnfc2025}
+\abntrefinfo{{DTB NFC}}{{DTB NFC}}{2025}
+{{DTB NFC}. \emph{RFID Applications in Marathon Events}. 2025.
+Dispon{\'\i}vel em:
+  \url{https://www.dtbnfc.com/blogs/rfid-applications-in-marathon-events/}.
+  Acesso em: 02 out. 2025.}
+
+\bibitem[{FinishLynx} 2025]{finishlynx2025}
+\abntrefinfo{{FinishLynx}}{{FinishLynx}}{2025}
+{{FinishLynx}. \emph{What is Fully Automatic Timing (FAT) for Sports?} 2025.
+Dispon{\'\i}vel em:
+  \url{https://finishlynx.com/about-us/what-is-fully-automatic-timing/}. Acesso
+  em: 15 set. 2025.}
+
+\bibitem[Mallen e Adams 2012]{mallen2012}
+\abntrefinfo{Mallen e Adams}{MALLEN; ADAMS}{2012}
+{MALLEN, C.; ADAMS, L.~J. \emph{Gest{\~a}o de eventos esportivos, recreativos e
+  tur{\'i}sticos: dimens{\~o}es te{\'o}ricas e pr{\'a}ticas}. S{\~a}o Paulo:
+  Manole, 2012.}
+
+\end{thebibliography}

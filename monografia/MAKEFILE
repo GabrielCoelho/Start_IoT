@@ -1,0 +1,87 @@
+.PHONY: all pdf clean cleanall watch help
+
+# Nome do arquivo principal (sem extensão)
+MAIN = tcc_start_iot
+
+# Compilador
+LATEX = pdflatex
+BIBTEX = bibtex
+LATEXMK = latexmk
+
+# Opções de compilação
+LATEX_OPTS = -interaction=nonstopmode -file-line-error
+LATEXMK_OPTS = -pdf -pdflatex="$(LATEX) $(LATEX_OPTS)"
+
+# Visualizador
+VIEWER = zathura
+
+# Cores para output
+GREEN = \033[0;32m
+YELLOW = \033[0;33m
+NC = \033[0m # No Color
+
+all: pdf ## Compila o documento PDF
+
+pdf: ## Compila usando latexmk
+	@echo "$(GREEN)Compilando $(MAIN).tex...$(NC)"
+	@$(LATEXMK) $(LATEXMK_OPTS) $(MAIN).tex
+	@echo "$(GREEN)Compilação concluída! PDF: $(MAIN).pdf$(NC)"
+
+watch: ## Compila continuamente ao detectar mudanças
+	@echo "$(YELLOW)Modo watch ativado. Salvando arquivos para recompilar...$(NC)"
+	@$(LATEXMK) $(LATEXMK_OPTS) -pvc $(MAIN).tex
+
+manual: ## Compilação manual (pdflatex + bibtex)
+	@echo "$(GREEN)Compilação manual...$(NC)"
+	@$(LATEX) $(LATEX_OPTS) $(MAIN).tex
+	@$(BIBTEX) $(MAIN)
+	@$(LATEX) $(LATEX_OPTS) $(MAIN).tex
+	@$(LATEX) $(LATEX_OPTS) $(MAIN).tex
+	@echo "$(GREEN)Compilação manual concluída!$(NC)"
+
+view: ## Abre o PDF no visualizador
+	@if [ -f $(MAIN).pdf ]; then \
+		echo "$(GREEN)Abrindo $(MAIN).pdf...$(NC)"; \
+		$(VIEWER) $(MAIN).pdf & \
+	else \
+		echo "$(YELLOW)PDF não encontrado. Compile primeiro com 'make pdf'$(NC)"; \
+	fi
+
+clean: ## Remove arquivos auxiliares
+	@echo "$(YELLOW)Limpando arquivos auxiliares...$(NC)"
+	@$(LATEXMK) -c
+	@rm -f *.bbl *.run.xml *.synctex.gz *.nav *.snm *.vrb
+	@echo "$(GREEN)Limpeza concluída!$(NC)"
+
+cleanall: ## Remove todos os arquivos gerados (incluindo PDF)
+	@echo "$(YELLOW)Limpando TODOS os arquivos gerados...$(NC)"
+	@$(LATEXMK) -C
+	@rm -f *.bbl *.run.xml *.synctex.gz *.nav *.snm *.vrb
+	@echo "$(GREEN)Limpeza completa!$(NC)"
+
+spell: ## Verifica ortografia (requer aspell)
+	@echo "$(GREEN)Verificando ortografia...$(NC)"
+	@aspell --lang=pt_BR --mode=tex check $(MAIN).tex
+
+count: ## Conta palavras no documento
+	@echo "$(GREEN)Contando palavras...$(NC)"
+	@texcount -1 -sum -merge $(MAIN).tex
+
+help: ## Mostra esta mensagem de ajuda
+	@echo "$(GREEN)Makefile para TCC START IoT$(NC)"
+	@echo ""
+	@echo "Uso: make [target]"
+	@echo ""
+	@echo "Targets disponíveis:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  $(YELLOW)%-12s$(NC) %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Exemplos:"
+	@echo "  make pdf      - Compila o documento"
+	@echo "  make watch    - Compila automaticamente ao salvar"
+	@echo "  make view     - Abre o PDF compilado"
+	@echo "  make clean    - Remove arquivos temporários"
+	@echo "  make cleanall - Remove tudo (incluindo PDF)"
+
+# Target padrão
+.DEFAULT_GOAL := help

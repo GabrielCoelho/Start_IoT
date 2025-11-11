@@ -1,0 +1,738 @@
+% ====================================================================
+% START IoT - TCC Fatec Mogi Mirim
+% Configurações baseadas no template tcc-fatec.tex (classe book)
+% Conteúdo textual original preservado integralmente
+% ====================================================================
+
+\documentclass[12pt,a4paper,oneside]{book}
+
+% ====================================================================
+% PACOTES NECESSÁRIOS
+% ====================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[brazilian]{babel}
+\usepackage[T1]{fontenc}
+
+% Fonte Arial (helvet)
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Margens: Superior e Esquerda = 3cm, Direita e Inferior = 2cm
+\usepackage[top=3cm, left=3cm, right=2cm, bottom=2cm]{geometry}
+
+% Espaçamento entrelinhas
+\usepackage{setspace}
+\onehalfspacing
+
+% Indentação de parágrafos
+\usepackage{indentfirst}
+\setlength{\parindent}{1.5cm}
+\setlength{\parskip}{0.2cm}
+
+% Numeração de páginas no canto superior direito
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyhead[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% Sumário e seções
+\usepackage{titlesec}
+\usepackage{titletoc}
+
+% Formatação de capítulos e seções
+\titleformat{\chapter}[display]
+  {\normalfont\fontsize{14}{16}\bfseries\centering}
+  {\thechapter}{0pt}{\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{1.5\baselineskip}
+
+\titleformat{\section}
+  {\normalfont\fontsize{12}{14}\bfseries}
+  {\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{1.5\baselineskip}{1.5\baselineskip}
+
+\titleformat{\subsection}
+  {\normalfont\fontsize{12}{14}\bfseries}
+  {\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{1.5\baselineskip}{1.5\baselineskip}
+
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{12}{14}\bfseries}
+  {\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{1.5\baselineskip}{1.5\baselineskip}
+
+% Figuras e tabelas
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{
+  font=small,
+  labelfont=bf,
+  format=plain,
+  justification=centering
+}
+
+\usepackage{float}
+\usepackage{booktabs}
+
+% Citações e referências
+\usepackage[brazilian,hyperpageref]{backref}
+\usepackage[alf]{abntex2cite}
+
+% Configurações do backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+\renewcommand{\backref}{}
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}
+
+% Listas
+\usepackage{enumitem}
+
+% Links e URLs
+\usepackage{color}
+\definecolor{blue}{RGB}{41,5,195}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    filecolor=magenta,
+    urlcolor=blue,
+    bookmarksdepth=4
+}
+
+% Outros pacotes
+\usepackage{lastpage}
+\usepackage{microtype}
+\usepackage{pdfpages}
+
+% ====================================================================
+% DEFINIÇÕES DE COMANDOS ABNTEX2 ADAPTADOS PARA BOOK
+% ====================================================================
+
+% Variáveis para armazenar informações
+\newcommand{\@titulo}{}
+\newcommand{\@autor}{}
+\newcommand{\@local}{}
+\newcommand{\@data}{}
+\newcommand{\@orientador}{}
+\newcommand{\@coorientador}{}
+\newcommand{\@instituicao}{}
+\newcommand{\@preambulo}{}
+
+% Comandos para definir informações
+\newcommand{\titulo}[1]{\renewcommand{\@titulo}{#1}}
+\newcommand{\autor}[1]{\renewcommand{\@autor}{#1}}
+\newcommand{\local}[1]{\renewcommand{\@local}{#1}}
+\newcommand{\data}[1]{\renewcommand{\@data}{#1}}
+\newcommand{\orientador}[1]{\renewcommand{\@orientador}{#1}}
+\newcommand{\coorientador}[1]{\renewcommand{\@coorientador}{#1}}
+\newcommand{\instituicao}[1]{\renewcommand{\@instituicao}{#1}}
+\newcommand{\tipotrabalho}[1]{}
+\newcommand{\preambulo}[1]{\renewcommand{\@preambulo}{#1}}
+
+% Comandos para imprimir informações
+\newcommand{\imprimirtitulo}{\@titulo}
+\newcommand{\imprimirautor}{\@autor}
+\newcommand{\imprimirlocal}{\@local}
+\newcommand{\imprimirdata}{\@data}
+\newcommand{\imprimirorientador}{\@orientador}
+\newcommand{\imprimircoorientador}{\@coorientador}
+\newcommand{\imprimirinstituicao}{\@instituicao}
+\newcommand{\imprimirpreambulo}{\@preambulo}
+\newcommand{\imprimirorientadorrotulo}{Orientador:}
+\newcommand{\imprimircoorientadorrotulo}{Coorientador:}
+\newcommand{\imprimirorientadornome}{\@orientador}
+\newcommand{\imprimircoorientadornome}{\@coorientador}
+
+% Comando para fonte de capítulos (compatibilidade)
+\newcommand{\ABNTEXchapterfont}{\bfseries}
+
+% Comando para capa
+\newcommand{\imprimircapa}{%
+\begin{titlepage}
+\begin{center}
+\bfseries
+\fontsize{14}{16}\selectfont
+\MakeUppercase{\@instituicao}
+
+\vspace{0pt plus 1fill}
+
+\fontsize{12}{14}\selectfont
+\@autor
+
+\vspace{0pt plus 1fill}
+
+\fontsize{14}{16}\selectfont
+\MakeUppercase{\@titulo}
+
+\vspace{0pt plus 1fill}
+
+\fontsize{12}{14}\selectfont
+\MakeUppercase{\@local}\\
+\@data
+\end{center}
+\end{titlepage}
+}
+
+% Comando para folha de rosto
+\newcommand{\imprimirfolhaderosto}[1][]{%
+\begin{titlepage}
+\begin{center}
+\fontsize{12}{14}\selectfont
+\bfseries
+\@autor
+
+\vspace{0pt plus 2fill}
+
+\fontsize{14}{16}\selectfont
+\MakeUppercase{\@titulo}
+
+\vspace{0pt plus 1fill}
+
+\hspace{.45\textwidth}
+\begin{minipage}{.5\textwidth}
+\fontsize{12}{14}\selectfont
+\singlespacing
+\mdseries
+\@preambulo
+
+\vspace{\baselineskip}
+\bfseries Orientador: \mdseries\@orientador
+\ifx\@coorientador\@empty\else
+\\\bfseries Coorientador: \mdseries\@coorientador
+\fi
+\end{minipage}
+
+\vspace{0pt plus 2fill}
+
+\fontsize{12}{14}\selectfont
+\bfseries
+\MakeUppercase{\@local}\\
+\@data
+\end{center}
+\end{titlepage}
+\ifx#1*%
+\newpage
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\fbox{\begin{minipage}{12cm}
+\begin{center}
+\textbf{FICHA CATALOGRÁFICA}\\
+(Elaborada pela Biblioteca)
+\end{minipage}}
+\end{center}
+\vspace*{\fill}
+\fi
+}
+
+% Ambiente para folha de aprovação
+\newenvironment{folhadeaprovacao}{%
+\newpage
+\thispagestyle{empty}
+}{}
+
+% Comando para assinatura
+\newcommand{\assinatura}[1]{%
+\vspace{1cm}
+\noindent\rule{7cm}{0.4pt}\\
+#1
+}
+
+% Ambiente para dedicatória
+\newenvironment{dedicatoria}{%
+\newpage
+\thispagestyle{empty}
+\vspace*{\fill}
+}{%
+\vspace*{\fill}
+}
+
+% Ambiente para agradecimentos
+\newenvironment{agradecimentos}{%
+\chapter*{AGRADECIMENTOS}
+\addcontentsline{toc}{chapter}{AGRADECIMENTOS}
+}{}
+
+% Ambiente para epígrafe
+\newenvironment{epigrafe}{%
+\newpage
+\thispagestyle{empty}
+}{}
+
+% Ambiente para resumo
+\newcounter{@abstractcount}
+\newenvironment{resumo}[1][RESUMO]{%
+\chapter*{#1}
+\addcontentsline{toc}{chapter}{#1}
+\singlespacing
+\noindent
+}{}
+
+% Ambiente para siglas
+\newenvironment{siglas}{%
+\chapter*{LISTA DE ABREVIATURAS E SIGLAS}
+\addcontentsline{toc}{chapter}{LISTA DE ABREVIATURAS E SIGLAS}
+\begin{description}[leftmargin=3cm,style=nextline]
+}{%
+\end{description}
+}
+
+% Comandos de seção (compatibilidade)
+\newcommand{\textual}{}
+\newcommand{\postextual}{}
+\newcommand{\phantompart}{}
+
+% Ambiente para apêndices
+\newenvironment{apendicesenv}{}{}
+\newcommand{\partapendices}{%
+\cleardoublepage
+\part*{Apêndices}
+\addcontentsline{toc}{part}{Apêndices}
+}
+
+% Redefinir listas de figuras e tabelas
+\let\oldlistoffigures\listoffigures
+\let\oldlistoftables\listoftables
+
+\renewcommand{\listoffigures}{%
+\chapter*{\listfigurename}
+\addcontentsline{toc}{chapter}{\listfigurename}
+\@starttoc{lof}
+}
+
+\renewcommand{\listoftables}{%
+\chapter*{\listtablename}
+\addcontentsline{toc}{chapter}{\listtablename}
+\@starttoc{lot}
+}
+
+% Redefinir sumário
+\let\oldtableofcontents\tableofcontents
+\renewcommand{\tableofcontents}{%
+\chapter*{\contentsname}
+\@starttoc{toc}
+}
+
+% Comandos auxiliares
+\newcommand{\listfigurename}{LISTA DE ILUSTRAÇÕES}
+\newcommand{\listtablename}{LISTA DE TABELAS}
+\renewcommand{\contentsname}{SUMÁRIO}
+
+% Comando para frenchspacing
+\frenchspacing
+
+% Variável para absparsep
+\newlength{\absparsep}
+\setlength{\absparsep}{18pt}
+
+% ====================================================================
+% INFORMAÇÕES DO DOCUMENTO (do arquivo original)
+% ====================================================================
+\titulo{START IoT: Plataforma Web e Tecnologia IoT na Sincronização e Controle de Largada e Gestão de Tempo
+na Descida da Ladeira}
+\autor{Brenda Ingrid Gaudêncio\\Gabriel Coelho Soares\\Marcos Moreira Martins}
+\local{MOGI MIRIM}
+\data{2025}
+\orientador{Prof. Me. Marcio Rodrigues Sabino}
+\coorientador{}
+\instituicao{%
+  CENTRO PAULA SOUZA
+  \par
+  FACULDADE DE TECNOLOGIA DE MOGI MIRIM
+  \par
+  Curso de Tecnologia em Análise e Desenvolvimento de Sistemas}
+\tipotrabalho{Trabalho de Graduação}
+\preambulo{Trabalho de Graduação apresentado ao Curso de Tecnologia em Análise e Desenvolvimento de Sistemas da Faculdade de Tecnologia de Mogi Mirim como pré-requisito para a obtenção do Título de Tecnólogo em Análise e Desenvolvimento de Sistemas.}
+
+% ====================================================================
+% CONFIGURAÇÕES DE PDF
+% ====================================================================
+\makeatletter
+\hypersetup{
+	pdftitle={\@titulo},
+	pdfauthor={\@autor},
+	pdfsubject={\@preambulo},
+	pdfcreator={LaTeX with tcc-fatec template},
+	pdfkeywords={IoT}{Cronometragem}{LoRa}{ESP32},
+}
+\makeatother
+
+\begin{document}
+
+% Seleciona o idioma do documento (conforme pacotes do babel)
+%\selectlanguage{english}
+\selectlanguage{brazil}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+% \pretextual
+
+% ---
+% Capa
+% ---
+\imprimircapa
+% ---
+
+% ---
+% Folha de rosto
+% (o * indica que haverá a ficha bibliográfica)
+% ---
+\imprimirfolhaderosto*
+% ---
+
+% ---
+% Inserir folha de aprovação
+% ---
+
+% Isto é um exemplo de Folha de aprovação, elemento obrigatório da NBR
+% 14724/2011 (seção 4.2.1.3). Você pode utilizar este modelo até a aprovação
+% do trabalho. Após isso, substitua todo o conteúdo deste arquivo por uma
+% imagem da página assinada pela banca com o comando abaixo:
+%
+% \begin{folhadeaprovacao}
+% \includepdf{folhadeaprovacao_final.pdf}
+% \end{folhadeaprovacao}
+%
+\begin{folhadeaprovacao}
+
+  \begin{center}
+    {\ABNTEXchapterfont\large\imprimirautor}
+
+    \vspace*{\fill}\vspace*{\fill}
+    \begin{center}
+      \ABNTEXchapterfont\bfseries\Large\imprimirtitulo
+    \end{center}
+    \vspace*{\fill}
+
+    \hspace{.45\textwidth}
+    \begin{minipage}{.5\textwidth}
+        \imprimirpreambulo
+    \end{minipage}%
+    \vspace*{\fill}
+   \end{center}
+
+   Trabalho aprovado. \imprimirlocal, \imprimirdata:
+
+   \assinatura{\textbf{\imprimirorientador} \\ Orientador}
+   \assinatura{\textbf{Professor} \\ Convidado 1}
+   \assinatura{\textbf{Professor} \\ Convidado 2}
+   %\assinatura{\textbf{Professor} \\ Convidado 3}
+   %\assinatura{\textbf{Professor} \\ Convidado 4}
+
+   \begin{center}
+    \vspace*{0.5cm}
+    {\large\imprimirlocal}
+    \par
+    {\large\imprimirdata}
+    \vspace*{1cm}
+  \end{center}
+
+\end{folhadeaprovacao}
+% ---
+
+% ---
+% Dedicatória
+% ---
+\begin{dedicatoria}
+   \vspace*{\fill}
+   \centering
+   \noindent
+   \textit{À Clementina e Maria, as melhores amigas que já pudemos ter. Saudades infinitas.}
+   \vspace*{\fill}
+\end{dedicatoria}
+% ---
+
+% ---
+% Agradecimentos
+% ---
+\begin{agradecimentos}
+Agradecemos ao nosso orientador, Marcio Rodrigues Sabino, por sua confiança em nossas ideias, por sua paciência e por sua amizade.
+
+
+
+\end{agradecimentos}
+% ---
+
+% ---
+% Epígrafe
+% ---
+\begin{epigrafe}
+    \vspace*{\fill}
+	\begin{flushright}
+		\textit{``A tecnologia para tornar algo invisível é tão infinitamente complexa\\
+		que é muito mais simples e eficaz remover a coisa e esquecer o assunto.''\\
+		(Douglas Adams)}
+	\end{flushright}
+\end{epigrafe}
+% ---
+
+% ---
+% RESUMOS
+% ---
+
+% resumo em português
+\setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
+\begin{resumo}
+X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx.
+
+ \textbf{Palavras-chave}: Xxxxx. Xxxxxxx. Xxxxxx. Xxxxxx.
+\end{resumo}
+
+% resumo em inglês
+\begin{resumo}[Abstract]
+ \begin{otherlanguage*}{english}
+X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx. X xxxxxxxxxx xxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx x xxxxxxxxxx. Xxxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxxxx xxxxxxxx.
+
+   \vspace{\onelineskip}
+
+   \noindent
+   \textbf{Keywords}: Xxxxxxx. Xxxxxxx. xXxxxxxxxxxxx.
+ \end{otherlanguage*}
+\end{resumo}
+
+% ---
+% inserir lista de ilustrações
+% ---
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de quadros
+% ---
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de abreviaturas e siglas
+% ---
+\begin{siglas}
+  \item[ABNT] Associação Brasileira de Normas Técnicas
+  \item[ANEEL] Agência Nacional de Energia Elétrica
+  \item[API] \textit{Application Programming Interface} -- Interface de Programação de Aplicação
+  \item[CRM] \textit{Customer Relationship Management} -- Gestão do Relacionamento com o Cliente
+  \item[DT] \textit{Design Thinking}
+  \item[IDE] \textit{Integrated Development Environment}
+  \item[IoT] \textit{Internet of Things} -- Internet das Coisas
+  \item[PO] \textit{Product Owner}
+  \item[SM] \textit{Scrum Master}
+  \item[TP] Transformador de Potencial Elétrico
+  \item[UML] \textit{Unified Modeling Language}
+  \item[XP] \textit{Extreme Programming}
+\end{siglas}
+% ---
+
+% ---
+% inserir o sumario
+% ---
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+% ---
+
+
+
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
+\textual
+
+% ----------------------------------------------------------
+% Introdução
+% ----------------------------------------------------------
+\chapter{INTRODUÇÃO}
+\label{cap:introducao}
+
+A inovação tecnológica tem revolucionado a gestão de eventos esportivos, demandando não somente conhecimento técnico especializado, mas a integração de soluções que otimizem os processos. A Descida da Ladeira Fioravante Willi Nesto, evento tradicional da Faculdade de Tecnologia ``Arthur de Azevedo'' em Mogi Mirim, idealizado em 2013 e que atualmente se encontra na 10ª edição, consolida-se como uma competição de carrinhos de rolimã que envolve estudantes de todos os cursos num projeto multidisciplinar. Ao longo de mais de uma década, este evento evoluiu de uma simples corrida para um complexo sistema de gestão que exige a coordenação eficiente dos envolvidos, o controle preciso dos tempos e a comunicação em tempo real, mostrando a importância da aplicação de princípios modernos de gestão esportiva no ambiente acadêmico.
+
+A Internet das Coisas (IoT) institui um ecossistema tecnológico que possibilita a conversão de equipamentos convencionais em dispositivos inteligentes, mediante a integração de sensores e o provimento de conectividade, permitindo o intercâmbio de informações via internet. Este paradigma transforma dispositivos físicos em entidades digitais com capacidade de comunicação autônoma, onde cada dispositivo detém sua própria identidade digital e aptidão para sensoriamento ambiental. No âmbito de eventos esportivos, tal abordagem viabiliza a concepção de sistemas automatizados que mitigam falhas humanas e elevam substancialmente a acurácia dos processos de cronometragem e gestão.
+
+Os novos padrões de precisão revolucionaram a organização dos eventos em busca de garantir a eficiência e experiência de uma solução para os participantes e organizadores. Exemplos notáveis incluem os sistemas de cronometragem por RFID que utilizados com chips \textit{Ultra High Frequency} (UHF) puderam auxiliar grandes maratonas, como a Maratona de Boston que teve mais de trinta mil corredores rastreados sem intervenção manual e com seus tempos atualizados e publicados online durante o evento \cite{dtbnfc2025}. Tais tecnologias permitem a captação de mais de mil participantes por segundo em distâncias de até 15 metros, garantindo uma cronometragem precisa mesmo com um grande número de participantes. De modo similar, corridas de Fórmula 1 representam o ápice da integração tecnológica esportiva, utilizando cerca de 300 sensores por carro, que geram 1,1 milhão de dados de telemetria por segundo, transmitidos em tempo real para as equipes através de sistemas infravermelhos e comunicação por rádio, permitindo análises instantâneas de desempenho e provendo tomadas de decisões críticas para novas estratégias de corrida das equipes \cite{awssports2025, catapult2025}.
+
+Em competições esportivas, a cronometragem tem evoluído de modo significativo, dos sistemas manuais e chegando às soluções tecnológicas automatizadas para desempenhar um papel fundamental na precisão, qualidade e credibilidade dos resultados. Cronometragem totalmente automática (FAT - \textit{Fully Automatic Time}) representa o teto atual neste campo, oferecendo precisão de até 1/1000 de segundo (0,001), utilizando-se de sistemas que sincronizam digitalmente os dispositivos de largada, medição de tempo e precisão na chegada \cite{finishlynx2025}.
+
+Segundo \citeonline{mallen2012} a gestão moderna de eventos esportivos demanda não apenas conhecimentos técnicos especializados, mas a integração de soluções tecnológicas avançadas que otimizam todos os processos, desde a inscrição até a apuração e finalização dos resultados. Incorporando estes sistemas com tecnologias voltadas para a IoT tem, sobretudo, revolucionado o setor, permitindo uma cronometragem cada vez mais precisa, buscando utilizar o rastreamento real da competição, transformando e melhorando a experiência tanto para organizadores quanto para os participantes.
+
+\section{Problematização}
+\label{sec:problematizacao}
+
+O evento Descida da Ladeira, contou em sua última edição com cerca de 30 equipes participantes, operando com um sistema de cronometragem baseado em três pontos de controle (A, B e C) apresentando limitações significativas. No Ponto A ocorre a largada através de uma buzina acionada manualmente; no Ponto B, um fiscal utiliza bandeira sinalizadora para comunicação visual; e no Ponto C, o responsável pela cronometragem recebe confirmação via \textit{walkie-talkie} ou WhatsApp e inicia manualmente o cronômetro ao visualizar a bandeira ou ouvir a buzina a mais de 100 metros de distância. Este processo apresenta diversas vulnerabilidades, tais como a dependência de comunicação visual em longas distâncias, falhas na comunicação, sincronização imprecisa entre pontos de controle, comprometimento da precisão pelo tempo de reação humano, fadiga dos operadores em ambiente de ruído elevado, lentidão no processamento das aproximadamente 30 equipes e necessidade de digitação manual dos resultados. Estas limitações impactam diretamente na credibilidade dos resultados e na experiência dos participantes, evidenciando a necessidade de uma solução tecnológica que efetue uma modernização e automatização desses processos.
+
+Como garantir a confiabilidade dos tempos de descida dos carrinhos de rolimã evitando gargalos de comunicação entre a organização e os participantes, tornando a competição mais justa e íntegra?
+
+% Continua nos próximos arquivos...
+% [O conteúdo completo seria muito extenso para um único response]
+
+\section{Objetivos}
+\label{sec:objetivos}
+
+Inserido neste contexto de modernização tecnológica para eventos esportivos e analisando a atual estrutura utilizada pela organização do evento Descida da Ladeira, o presente trabalho propõe os seguintes objetivos:
+
+\subsection{Objetivos Gerais}
+\label{subsec:objetivos-gerais}
+
+A evolução do sistema de gestão implementando dispositivos IoT para a comunicação e automação de largada, integração de protocolos para sincronização de dados e o desenvolvimento de uma plataforma web para alinhar o evento às tendências contemporâneas de automação, conectividade e inovação presentes nos grandes eventos esportivos.
+
+\subsection{Objetivos Específicos}
+\label{subsec:objetivos-especificos}
+
+Este projeto busca desenvolver um sistema integrado de gestão esportiva utilizando tecnologias IoT e protocolos de comunicação sem fio, como a rede LoRa, a fim de automatizar os processos do evento tornando-o mais preciso, confiável e trazendo uma melhor transparência na apuração dos resultados. Para alcançar estes objetivos, a equipe propõe:
+
+\begin{enumerate}[label=\alph*)]
+\item Implementar um sistema automatizado de largada confirmado pelo agente-organizador que efetuará a cronometragem, utilizando de dispositivos ESP32 para garantir sincronização precisa do início das descidas;
+\item Desenvolver uma rede de comunicação LoRa para transmissão de dados em tempo real entre os pontos de cronometragem e a central de controle, garantindo robustez mesmo em condições adversas de conectividade;
+\item Criar uma plataforma web responsiva utilizando Java Spring Boot e React para gestão completa do evento, podendo incluir o cadastro de participantes, visualização de resultados e dashboard administrativo;
+\item Integrar protocolos MQTT/RabbitMQ para sincronização eficiente de dados entre dispositivos IoT e sistema central, implementando mecanismos de buffer local para resiliência de comunicação.
+\end{enumerate}
+
+As tecnologias empregadas incluirão Java Spring Boot para \textit{backend}, React para \textit{frontend}, protocolos MQTT/RabbitMQ para mensageria, ESP32 para dispositivos embarcados, comunicação LoRa para a transmissão de dados, sempre buscando configurar todo o ambiente alinhado com as tendências atuais do mercado.
+
+% [Continuação em próximos arquivos modulares]
+
+% ----------------------------------------------------------
+% PARTE - Continuação dos capítulos
+% ----------------------------------------------------------
+
+\include{capitulos/cap02-metodologia}
+\include{capitulos/cap03-fundamantacao-teorica}
+\include{capitulos/cap04-desenvolvimento}
+\include{capitulos/cap05-conclusao}
+
+% ----------------------------------------------------------
+% Finaliza a parte no bookmark do PDF
+% para que se inicie o bookmark na raiz
+% e adiciona espaço de parte no Sumário
+% ----------------------------------------------------------
+\phantompart
+
+% ---
+% Conclusão (outro exemplo de capítulo sem numeração e presente no sumário)
+% ---
+%\chapter*[Conclusão]{Conclusão}
+%\addcontentsline{toc}{chapter}{Conclusão}
+% ---
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+% ----------------------------------------------------------
+
+% ----------------------------------------------------------
+% Referências bibliográficas
+% ----------------------------------------------------------
+\bibliography{referencias}
+
+% ----------------------------------------------------------
+% Apêndices
+% ----------------------------------------------------------
+
+% ---
+% Inicia os apêndices
+% ---
+\begin{apendicesenv}
+
+% Imprime uma página indicando o início dos apêndices
+\partapendices
+
+\chapter{Declaração de Inexistência de Plágio}
+\label{ap:declaracao-plagio}
+
+\textbf{TÍTULO DE TRABALHO:} START IoT: Plataforma Web e Tecnologia IoT na Sincronização e Controle de Largada e Gestão de Tempo na Descida da Ladeira
+
+\textbf{ALUNOS:}
+\begin{itemize}
+    \item Brenda Ingrid Gaudêncio
+    \item Gabriel Coelho Soares
+    \item Marcos Moreira Martins
+\end{itemize}
+
+Eu, \textbf{BRENDA INGRID GAUDÊNCIO}, RA XXXXXXX, eu \textbf{GABRIEL COELHO SOARES}, RA XXXXXXX e eu, \textbf{MARCOS MOREIRA MARTINS}, RA XXXXXXX concluintes do curso de Tecnologia em \textbf{ANÁLISE E DESENVOLVIMENTO DE SISTEMAS} e que apresentamos nosso trabalho no \textbf{1º semestre de 2025}, declaramos que, com exceção das citações diretas e indiretas claramente indicadas e referenciadas, este trabalho foi escrito por nós e, portanto, não contém plágio. Estamos conscientes que a utilização de material de terceiros incluindo uso de paráfrase sem a devida indicação das fontes será considerado plágio, e estará sujeito a processos administrativos da Faculdade de Tecnologia de Mogi Mirim e sanções legais.
+
+Mogi Mirim, 31 de maio de 2025.
+
+\vspace{2cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Brenda Ingrid Gaudêncio
+
+\vspace{1cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Gabriel Coelho Soares
+
+\vspace{1cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Marcos Moreira Martins
+
+
+\chapter{Termos de Autorização de Publicação do Trabalho de Graduação}
+\label{ap:autorizacao-publicacao}
+
+Eu, \textbf{BRENDA INGRID GAUDÊNCIO}, RA XXXXXXX, eu \textbf{GABRIEL COELHO SOARES}, RA XXXXXXX e eu, \textbf{MARCOS MOREIRA MARTINS}, RA XXXXXXX concluintes do curso de Tecnologia em \textbf{ANÁLISE E DESENVOLVIMENTO DE SISTEMAS} e que apresentamos nosso trabalho no \textbf{1º semestre de 2025}, declaramos que autorizamos a Faculdade de Tecnologia de Mogi Mirim -- Arthur de Azevedo a publicar nosso Trabalho de Graduação em seu Site na Internet, integralmente ou parcialmente, bem como a disponibilizar o trabalho impresso na biblioteca da unidade.
+
+Mogi Mirim, 31 de maio de 2025.
+
+\vspace{2cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Brenda Ingrid Gaudêncio
+
+\vspace{1cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Gabriel Coelho Soares
+
+\vspace{1cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+Marcos Moreira Martins
+
+
+\chapter{Autorização de uso de Nome ou Imagem}
+\label{ap:autorizacao-imagem}
+
+Eu, João Batista Pena, Sócio-Administrador da empresa Seed'el Tecnologia, localizada na Avenida Ministro Roberto Cardoso Alves n.º 2105, Mogi Guaçu - SP, AUTORIZO o uso de minha imagem ou do nome de minha empresa Seed'el Tecnologia LTDA, constante no documento Trabalho de Graduação com o fim específico de estudo de caso, sem qualquer ônus e em caráter definitivo.
+
+A presente autorização abrangendo o uso do nome da minha empresa acima mencionada é concedida a FATEC ARTHUR DE AZEVEDO - MOGI MIRIM a título gratuito, abrangendo inclusive a licença aos alunos pesquisadores, de forma direta ou indireta, e a inserção em materiais para toda e qualquer finalidade, seja para uso exclusivamente didático e outros que existam ou venham a existir no futuro, para veiculação/distribuição em território nacional e internacional, por prazo indeterminado. Por esta ser a expressão da minha vontade, declaro que autorizo o uso acima descrito, sem que nada haja a ser reclamado a título de direitos conexos à imagem e o nome da empresa ora autorizada ou a qualquer outro.
+
+Mogi Guaçu, 09 de junho de 2025.
+
+\vspace{2cm}
+
+\noindent\rule{6cm}{0.4pt}\\
+João Batista Pena\\
+Telefone para contato: (19) 99766-0286
+
+\end{apendicesenv}
+% ---
+
+
+%---------------------------------------------------------------------
+% INDICE REMISSIVO
+%---------------------------------------------------------------------
+%\phantompart
+%\printindex
+%---------------------------------------------------------------------
+
+\end{document}
