@@ -55,12 +55,11 @@
 \usepackage{tocloft}
 \renewcommand{\cfttoctitlefont}{\hfill\fontsize{14pt}{16pt}\selectfont\bfseries}
 \renewcommand{\cftaftertoctitle}{\hfill}
-\renewcommand{\cftloftitlefont}{\hfill\fontsize{14pt}{16pt}\selectfont\bfseries}
+\renewcommand{\cftloftitlefont}{\hfill\fontsize{14pt}{16pt}\selectfont\bfseries\MakeUppercase}
 \renewcommand{\cftafterloftitle}{\hfill}
-\renewcommand{\cftlottitlefont}{\hfill\fontsize{14pt}{16pt}\selectfont\bfseries}
+\renewcommand{\cftlottitlefont}{\hfill\fontsize{14pt}{16pt}\selectfont\bfseries\MakeUppercase}
 \renewcommand{\cftafterlottitle}{\hfill}
 
-% *** ALTERAÇÃO FEITA ***
 % As formatações de \titleformat e \titlespacing foram REMOVIDAS daqui
 % e movidas para o corpo do documento, para que não afetem
 % os elementos pré-textuais (Resumo, Sumário, etc.)
@@ -88,7 +87,7 @@
 
 % Citações e referências (ABNT)
 % Nota: Se abntex2cite não estiver disponível, use natbib como alternativa
-\usepackage[round]{natbib}
+\usepackage[round]{abntex2cite}
 \bibliographystyle{plainnat}
 
 % Listas
@@ -112,12 +111,12 @@
 % ====================================================================
 % INFORMAÇÕES DO DOCUMENTO
 % ====================================================================
-\title{TÍTULO DO TRABALHO DE GRADUAÇÃO}
-\newcommand{\subtitulo}{Subtítulo, se houver}
-\newcommand{\autor}{Nome do Acadêmico}
-\newcommand{\autordois}{Nome do Acadêmico} % Comentar se houver apenas um autor
-\newcommand{\autortres}{Nome do Acadêmico} % Comentar se houver apenas dois autores
-\newcommand{\orientador}{Prof. Dr. Nome do Orientador}
+\newcommand{\titulo}{START IoT}
+\newcommand{\subtitulo}{Plataforma Web e Tecnologia IoT na Sincronização e Controle de Largada e Gestão de Tempo na Descida da Ladeira}
+\newcommand{\autor}{Brenda Ingrid Gaudêncio}
+\newcommand{\autordois}{Gabriel Coelho Soares} % Comentar se houver apenas um autor
+\newcommand{\autortres}{Marcos Moreira Martins} % Comentar se houver apenas dois autores
+\newcommand{\orientador}{Prof. Me. Marcio Rodrigues Sabino}
 \newcommand{\curso}{Análise e Desenvolvimento de Sistemas}
 \newcommand{\instituicao}{CENTRO PAULA SOUZA\\FACULDADE DE TECNOLOGIA DE MOGI MIRIM}
 \newcommand{\local}{Mogi Mirim}
@@ -150,7 +149,7 @@
 \vspace{0pt plus 1fill}
 
 \fontsize{14}{16}\selectfont
-\textbf{\MakeUppercase{\@title}}\\
+\textbf{\MakeUppercase{\titulo}}\\
 \ifdef{\subtitulo}{\subtitulo}{}
 
 \vspace{0pt plus 1fill}
@@ -176,7 +175,7 @@
 \vspace{0pt plus 2fill}
 
 \fontsize{14}{16}\selectfont
-\textbf{\MakeUppercase{\@title}}\\
+\textbf{\MakeUppercase{\titulo}}\\
 \ifdef{\subtitulo}{\subtitulo}{}
 
 \vspace{0pt plus 1fill}
@@ -227,7 +226,7 @@ Trabalho de Graduação apresentado ao Curso de Tecnologia em \curso{} da Faculd
 \vspace*{\fill}
 \begin{flushright}
 \begin{minipage}{8cm}
-\emph{Texto da dedicatória...}
+\emph{Ao Professor Fioravante Willi Nesto, nosso muito obrigado por idealizar a "Descida da Ladeira" em 2013, inspirando o espírito de equipe e a multidisciplinaridade que fundamentaram este projeto.}
 \end{minipage}
 \end{flushright}
 
@@ -245,9 +244,9 @@ Texto dos agradecimentos...
 \vspace*{\fill}
 \begin{flushright}
 \begin{minipage}{8cm}
-\emph{``Texto da epígrafe...''}
+\emph{``A única coisa que a Internet das Coisas ainda não faz é achar a meia que sumiu na lavanderia'}
 \begin{flushright}
---- Autor da citação
+--- The Primeagen
 \end{flushright}
 \end{minipage}
 \end{flushright}
@@ -280,9 +279,11 @@ Translation of the abstract in English.
 % LISTAS (Opcional)
 % ====================================================================
 % Lista de Figuras
+\clearpage
 \listoffigures
 
 % Lista de Tabelas
+\clearpage
 \listoftables
 
 % Lista de Abreviaturas e Siglas
@@ -306,7 +307,6 @@ Translation of the abstract in English.
 \pagenumbering{arabic}
 \setcounter{page}{1}
 
-% *** ALTERAÇÃO FEITA ***
 % A formatação com indentação de 1.25cm é definida AQUI.
 % Ela se aplicará a tudo daqui para frente, até ser redefinida.
 \titleformat{\chapter}[hang]
@@ -328,7 +328,6 @@ Translation of the abstract in English.
   {\normalfont\fontsize{12}{14}\bfseries}
   {\thesubsubsection}{1em}{}
 \titlespacing*{\subsubsection}{1.25cm}{1.5\baselineskip}{1.5\baselineskip}
-% *** FIM DA ALTERAÇÃO ***
 
 
 \chapter{INTRODUÇÃO}
@@ -345,46 +344,11 @@ Texto do objetivo geral.
 \item Objetivo específico 3.
 \end{itemize}
 
-\chapter{FUNDAMENTAÇÃO TEÓRICA}
-Desenvolvimento do referencial teórico.
+\include{capitulos/cap02-metodologia}
+\include{capitulos/cap03-fundamantacao-teorica}
+\include{capitulos/cap04-desenvolvimento}
 
-\section{Seção}
-Texto da seção.
-\subsection{Subseção}
-Texto da subseção.
 
-\subsubsection{Subsubseção}
-Texto da subsubseção.
-
-% Exemplo de citação
-Segundo \citet{autor2023}, o desenvolvimento de sistemas...
-
-% Exemplo de figura
-\begin{figure}[H]
-\centering
-% \includegraphics[width=0.8\textwidth]{figura.png}
-\caption{Título da figura}
-\label{fig:exemplo}
-\end{figure}
-
-% Exemplo de tabela
-\begin{table}[H]
-\centering
-\caption{Título da tabela}
-\label{tab:exemplo}
-\begin{tabular}{lcc}
-\toprule
-\textbf{Coluna 1} & \textbf{Coluna 2} & \textbf{Coluna 3} \\
-\midrule
-Dado 1 & Dado 2 & Dado 3 \\
-Dado 4 & Dado 5 & Dado 6 \\
-\bottomrule
-\end{tabular}
-\fonte{Elaborado pelo autor (2025)}
-\end{table}
-
-\chapter{METODOLOGIA}
-Descrição dos procedimentos metodológicos.
 \chapter{RESULTADOS ESPERADOS}
 Apresentação dos resultados.
 
@@ -395,7 +359,6 @@ Texto da conclusão.
 % ====================================================================
 \bibliography{referencias}
 
-% *** ALTERAÇÃO FEITA ***
 % Formatação para os elementos pós-textuais (Apêndices e Anexos)
 % Centralizado, negrito, Arial 14
 \titleformat{\chapter}[display]
@@ -422,7 +385,6 @@ Texto da conclusão.
   {\normalfont\fontsize{12}{14}\bfseries}
   {\thesubsubsection}{1em}{}
 \titlespacing*{\subsubsection}{0cm}{1.5\baselineskip}{1.5\baselineskip}
-% *** FIM DA ALTERAÇÃO ***
 
 % ====================================================================
 % APÊNDICES (Opcional)
