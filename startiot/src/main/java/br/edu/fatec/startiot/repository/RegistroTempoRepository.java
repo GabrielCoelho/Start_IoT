@@ -3,6 +3,8 @@ package br.edu.fatec.startiot.repository;
 import br.edu.fatec.startiot.domain.entity.RegistroTempo;
 import br.edu.fatec.startiot.domain.enums.TipoRegistro;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,4 +21,11 @@ public interface RegistroTempoRepository extends JpaRepository<RegistroTempo, Lo
     List<RegistroTempo> findByValidado(Boolean validado);
 
     List<RegistroTempo> findByEquipeIdOrderByTempoMilissegundosAsc(Long equipeId);
+
+    @Query("SELECT rt FROM RegistroTempo rt " +
+           "JOIN rt.corrida c JOIN c.bateria b " +
+           "WHERE b.edicao.id = :edicaoId " +
+           "AND rt.validado = true " +
+           "AND rt.tipoRegistro = 'CHEGADA'")
+    List<RegistroTempo> findTemposValidadosPorEdicao(@Param("edicaoId") Long edicaoId);
 }
