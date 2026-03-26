@@ -3,6 +3,9 @@ package br.edu.fatec.startiot.controller;
 import br.edu.fatec.startiot.dto.request.CorridaRequest;
 import br.edu.fatec.startiot.dto.response.CorridaResponse;
 import br.edu.fatec.startiot.service.CorridaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Corridas", description = "Gerenciamento das corridas individuais dentro de uma bateria")
 @RestController
 @RequestMapping("/api/corridas")
 @RequiredArgsConstructor
@@ -18,38 +22,78 @@ public class CorridaController {
 
     private final CorridaService corridaService;
 
+    @Operation(
+        summary = "Criar corrida",
+        description = "Cria uma corrida dentro de uma bateria, definindo as equipes participantes e a ordem de largada. " +
+                      "Uma Corrida é a unidade mínima da competição onde os tempos são registrados pelos árbitros."
+    )
     @PostMapping
     public ResponseEntity<CorridaResponse> criar(@Valid @RequestBody CorridaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(corridaService.criar(request));
     }
 
+    @Operation(
+        summary = "Buscar corrida por ID",
+        description = "Retorna os dados de uma corrida específica, incluindo equipes participantes, status e registros de tempo vinculados."
+    )
     @GetMapping("/{id}")
-    public ResponseEntity<CorridaResponse> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<CorridaResponse> buscarPorId(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.buscarPorId(id));
     }
 
+    @Operation(
+        summary = "Listar corridas da bateria",
+        description = "Retorna todas as corridas de uma bateria em ordem de criação. " +
+                      "Use para exibir a grade de corridas no painel do árbitro durante o evento."
+    )
     @GetMapping
-    public ResponseEntity<List<CorridaResponse>> listarPorBateria(@RequestParam Long bateriaId) {
+    public ResponseEntity<List<CorridaResponse>> listarPorBateria(
+            @Parameter(description = "ID da bateria", required = true) @RequestParam Long bateriaId) {
         return ResponseEntity.ok(corridaService.listarPorBateria(bateriaId));
     }
 
+    @Operation(
+        summary = "Iniciar corrida",
+        description = "Marca a corrida como em andamento e registra o horário de início. " +
+                      "A partir deste momento, os árbitros podem registrar os tempos das equipes participantes via /api/registros-tempo."
+    )
     @PatchMapping("/{id}/iniciar")
-    public ResponseEntity<CorridaResponse> iniciar(@PathVariable Long id) {
+    public ResponseEntity<CorridaResponse> iniciar(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.iniciar(id));
     }
 
+    @Operation(
+        summary = "Finalizar corrida",
+        description = "Encerra a corrida e bloqueia novos registros de tempo. Os tempos já registrados e validados serão considerados no ranking. " +
+                      "Acione após a última equipe cruzar a linha de chegada."
+    )
     @PatchMapping("/{id}/finalizar")
-    public ResponseEntity<CorridaResponse> finalizar(@PathVariable Long id) {
+    public ResponseEntity<CorridaResponse> finalizar(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.finalizar(id));
     }
 
+    @Operation(
+        summary = "Cancelar corrida",
+        description = "Cancela uma corrida que ainda não foi finalizada. Os registros de tempo coletados são desconsiderados. " +
+                      "Use em caso de acidente, falha técnica generalizada ou qualquer incidente que impeça a conclusão regular da corrida."
+    )
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<CorridaResponse> cancelar(@PathVariable Long id) {
+    public ResponseEntity<CorridaResponse> cancelar(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.cancelar(id));
     }
 
+    @Operation(
+        summary = "Desclassificar corrida",
+        description = "Desclassifica uma equipe de uma corrida já finalizada por infração ao regulamento (colisão intencional, " +
+                      "uso de peças não homologadas, etc.). Os tempos da equipe desclassificada são removidos do ranking."
+    )
     @PatchMapping("/{id}/desclassificar")
-    public ResponseEntity<CorridaResponse> desclassificar(@PathVariable Long id) {
+    public ResponseEntity<CorridaResponse> desclassificar(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.desclassificar(id));
     }
 }
