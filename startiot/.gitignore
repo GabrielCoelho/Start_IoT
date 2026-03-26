@@ -9,3 +9,7 @@ target/
 .settings/
 .classpath
 .project
+
+# Configurações locais (dados sensíveis — nunca commitar)
+src/main/resources/application-local.yml
+src/main/resources/application-local.yaml
