@@ -3,25 +3,20 @@ spring:
     name: startiot
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/startiot
-    username: ${DB_USER:startiot}
-    password: ${DB_PASS:startiot}
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     open-in-view: false
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 server:
   port: 8080
-
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
