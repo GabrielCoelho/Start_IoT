@@ -9,6 +9,7 @@ import br.edu.fatec.startiot.dto.request.RegistroTempoRequest;
 import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
 import br.edu.fatec.startiot.exception.NotFoundException;
+import br.edu.fatec.startiot.repository.AlocacaoEquipeCorridaRepository;
 import br.edu.fatec.startiot.repository.RegistroTempoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.List;
 public class RegistroTempoService {
 
     private final RegistroTempoRepository registroTempoRepository;
+    private final AlocacaoEquipeCorridaRepository alocacaoRepository;
     private final CorridaService corridaService;
     private final EquipeService equipeService;
     private final UsuarioService usuarioService;
@@ -37,6 +39,17 @@ public class RegistroTempoService {
         }
 
         Equipe equipe = equipeService.buscarEntidade(request.equipeId());
+
+        // Se a corrida possui pré-alocações, apenas as equipes alocadas podem ter tempos registrados.
+        // Corridas sem nenhuma alocação mantêm o comportamento original (aceita qualquer equipe aprovada).
+        if (alocacaoRepository.existsByCorridaId(corrida.getId())
+                && !alocacaoRepository.existsByCorridaIdAndEquipeId(corrida.getId(), equipe.getId())) {
+            throw new BusinessException(
+                    "Equipe '%s' não está pré-alocada nesta corrida. " +
+                    "Verifique as alocações em GET /api/corridas/%d/equipes."
+                    .formatted(equipe.getNome(), corrida.getId())
+            );
+        }
         Usuario usuario = usuarioService.buscarEntidade(usuarioId);
 
         RegistroTempo registro = new RegistroTempo();

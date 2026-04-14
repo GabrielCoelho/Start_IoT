@@ -1,6 +1,8 @@
 package br.edu.fatec.startiot.controller;
 
+import br.edu.fatec.startiot.dto.request.AlocacaoEquipeCorridaRequest;
 import br.edu.fatec.startiot.dto.request.CorridaRequest;
+import br.edu.fatec.startiot.dto.response.AlocacaoEquipeCorridaResponse;
 import br.edu.fatec.startiot.dto.response.CorridaResponse;
 import br.edu.fatec.startiot.service.CorridaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -95,5 +97,50 @@ public class CorridaController {
     public ResponseEntity<CorridaResponse> desclassificar(
             @Parameter(description = "ID da corrida") @PathVariable Long id) {
         return ResponseEntity.ok(corridaService.desclassificar(id));
+    }
+
+    // -------------------------------------------------------------------------
+    // Pré-alocação de equipes
+    // -------------------------------------------------------------------------
+
+    @Operation(
+        summary = "Alocar equipe na corrida",
+        description = "Pré-aloca uma equipe em uma corrida antes do seu início. " +
+                      "Ao existir ao menos uma alocação, somente as equipes alocadas poderão ter tempos " +
+                      "registrados nesta corrida via /api/registros-tempo, evitando erros de vinculação " +
+                      "durante a cronometragem. A alocação só é permitida enquanto a corrida estiver com " +
+                      "status AGUARDANDO. A equipe deve estar APROVADA e pertencer à mesma edição."
+    )
+    @PostMapping("/{id}/equipes")
+    public ResponseEntity<AlocacaoEquipeCorridaResponse> alocarEquipe(
+            @Parameter(description = "ID da corrida") @PathVariable Long id,
+            @Valid @RequestBody AlocacaoEquipeCorridaRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(corridaService.alocarEquipe(id, request));
+    }
+
+    @Operation(
+        summary = "Remover alocação de equipe",
+        description = "Remove a pré-alocação de uma equipe da corrida. " +
+                      "Só é possível remover enquanto a corrida estiver com status AGUARDANDO. " +
+                      "Retorna 204 No Content em caso de sucesso."
+    )
+    @DeleteMapping("/{id}/equipes/{equipeId}")
+    public ResponseEntity<Void> removerAlocacao(
+            @Parameter(description = "ID da corrida") @PathVariable Long id,
+            @Parameter(description = "ID da equipe a ser removida da corrida") @PathVariable Long equipeId) {
+        corridaService.removerAlocacao(id, equipeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+        summary = "Listar equipes alocadas na corrida",
+        description = "Retorna todas as equipes pré-alocadas em uma corrida, ordenadas por data de alocação. " +
+                      "Use este endpoint no frontend de cronometragem para exibir apenas as equipes " +
+                      "participantes, sem precisar carregar a lista completa de equipes da edição."
+    )
+    @GetMapping("/{id}/equipes")
+    public ResponseEntity<List<AlocacaoEquipeCorridaResponse>> listarAlocacoes(
+            @Parameter(description = "ID da corrida") @PathVariable Long id) {
+        return ResponseEntity.ok(corridaService.listarAlocacoes(id));
     }
 }
