@@ -39,7 +39,7 @@ const LoginPage: React.FC<any> = () => {
       console.log("Login realizado com sucesso:", result.user);
       localStorage.setItem('user_session', JSON.stringify(result.user));
       
-      navigate('/cronometragem');
+      navigate('/equipes');
     } else {
       setError(result.message);
     }

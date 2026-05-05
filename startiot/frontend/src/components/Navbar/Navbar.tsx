@@ -1,19 +1,9 @@
 import { Box, Typography, Button, Stack } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { MENU_ITEMS } from '../../routes/Routes';
 
-const Navbar: any = () => {
-  const navigate: any = useNavigate();
-  const location: any = useLocation();
-
-  const handleLogout: any = () => {
-    localStorage.removeItem('user_session'); 
-    navigate('/');
-  };
-
-  const isActive: any = (path: any) => location.pathname === path;
-
-  const NavButton: any = ({ label, active, onClick }: any) => (
+const NavButton = ({ label, active, onClick }: {label: string; active: boolean; onClick: () => void}) => (
   <Button 
     onClick={onClick}
     sx={{ 
@@ -23,6 +13,7 @@ const Navbar: any = () => {
       px: 1.5,
       borderRadius: 1.5,
       textTransform: 'none',
+      fontWeight: active ? 700 : 400,
       '&:hover': { bgcolor: 'rgba(200,16,46,0.3)', color: '#fff' }
     }}
   >
@@ -30,8 +21,18 @@ const Navbar: any = () => {
   </Button>
 );
 
+const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout: any = () => {
+    localStorage.removeItem('user_session'); 
+    navigate('/');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <>
     <Box sx={{ 
       bgcolor: '#1A1A2E', 
       height: 52, 
@@ -41,29 +42,35 @@ const Navbar: any = () => {
       gap: 1,
       position: 'sticky',
       top: 0,
-      zIndex: 1000
+      zIndex: 1100
     }}>
-      <Typography sx={{ color: '#C8102E', fontWeight: 800, fontSize: 15, mr: 2, letterSpacing: 0.5 }}>
+      <Typography 
+        onClick={() => navigate('/cronometragem')}
+        sx={{ color: '#C8102E', fontWeight: 900, fontSize: 15, mr: 2, letterSpacing: 0.5, cursor: 'pointer' }}
+      >
         🏁 START IoT
       </Typography>
 
       <Stack direction="row" spacing={1} sx={{ flexGrow: 1 }}>
-        <NavButton label="Cronometragem" path="/cronometragem" active={isActive('/cronometragem')} onClick={() => navigate('/cronometragem')} />
-        <NavButton label="Ranking" path="/ranking" active={isActive('/ranking')} onClick={() => navigate('/ranking')} />
+        {MENU_ITEMS.map((item: any) => (
+          <NavButton 
+            key={item.path}
+            label={item.label} 
+            active={isActive(item.path)} 
+            onClick={() => navigate(item.path)} 
+          />
+        ))}
       </Stack>
 
       <Button 
         onClick={handleLogout}
         startIcon={<LogoutIcon />}
-        sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, '&:hover': { color: '#fff' } }}
+        sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, textTransform: 'none', '&:hover': { color: '#fff' } }}
       >
         Sair
       </Button>
     </Box>
-    </>
   );
 };
 
-
-
-export {Navbar};
+export { Navbar };
