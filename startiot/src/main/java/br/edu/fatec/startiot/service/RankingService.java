@@ -23,6 +23,11 @@ public class RankingService {
     private final RegistroTempoRepository registroTempoRepository;
     private final EdicaoService edicaoService;
 
+    // @TODO: Revisar lógica de ranking conforme regulamento oficial da Descida da Ladeira:
+    //        - Critérios de desempate (ex: segunda melhor descida, menor média, etc.)
+    //        - Filtrar apenas corridas com status FINALIZADA
+    //        - Avaliar separação por categoria/bateria
+    //        - Tratar penalidades e desclassificações
     @Transactional(readOnly = true)
     public RankingResponse calcularRanking(Long edicaoId) {
         Edicao edicao = edicaoService.buscarEntidade(edicaoId);

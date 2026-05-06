@@ -1,13 +1,31 @@
-export const validateLogin= (email: string, password: string, role: string) => {
-  const MOCK_USER = "operador@fatec.sp.gov.br";
-  const MOCK_PASS = "123456";
+import axios from 'axios';
 
-  if (email === MOCK_USER && password === MOCK_PASS) {
-    return {
-      success: true,
-      user: { name: "Operador FATEC", role: role }
-    };
-  }
+export type PerfilUsuario = 'ORGANIZADOR' | 'CRONOMETRISTA' | 'ADMIN';
 
-  return { success: false, message: "E-mail ou senha incorretos!" };
-};
+export interface SessionUser {
+  token: string;
+  usuarioId: number;
+  nomeUsuario: string;
+  perfil: PerfilUsuario;
+}
+
+export async function login(email: string, senha: string): Promise<SessionUser> {
+  const { data } = await axios.post('/api/auth/login', { email, senha });
+  const session: SessionUser = {
+    token: data.token,
+    usuarioId: data.usuarioId,
+    nomeUsuario: data.nomeUsuario,
+    perfil: data.perfil,
+  };
+  localStorage.setItem('user_session', JSON.stringify(session));
+  return session;
+}
+
+export function getSession(): SessionUser | null {
+  const raw = localStorage.getItem('user_session');
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function logout(): void {
+  localStorage.removeItem('user_session');
+}

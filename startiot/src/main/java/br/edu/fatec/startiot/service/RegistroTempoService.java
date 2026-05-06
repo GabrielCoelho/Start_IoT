@@ -60,7 +60,7 @@ public class RegistroTempoService {
         registro.setTipoRegistro(request.tipoRegistro());
         registro.setObservacoes(request.observacoes());
         registro.setTimestampRegistro(LocalDateTime.now());
-        registro.setValidado(false);
+        registro.setValidado(true);
 
         return toResponse(registroTempoRepository.save(registro));
     }
