@@ -1,5 +1,6 @@
 package br.edu.fatec.startiot.controller;
 
+import br.edu.fatec.startiot.dto.request.PenalidadeRequest;
 import br.edu.fatec.startiot.dto.request.RegistroTempoRequest;
 import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.service.RegistroTempoService;
@@ -22,61 +23,63 @@ public class RegistroTempoController {
 
     private final RegistroTempoService registroTempoService;
 
-    // TODO: substituir X-Usuario-Id por extração do JWT na Fase de Segurança
-    @Operation(
-        summary = "Registrar tempo",
-        description = "Submete o tempo cronometrado de uma equipe em uma corrida. Deve ser chamado pelo árbitro assim que a equipe " +
-                      "cruzar a linha de chegada. O header 'X-Usuario-Id' identifica o árbitro responsável pelo registro " +
-                      "(será substituído por JWT na fase de segurança). A corrida precisa estar com status EM_ANDAMENTO."
-    )
+    @Operation(summary = "Registrar tempo",
+        description = "Submete o tempo cronometrado de uma equipe em uma corrida. A corrida precisa estar EM_ANDAMENTO.")
     @PostMapping
     public ResponseEntity<RegistroTempoResponse> registrar(
             @Valid @RequestBody RegistroTempoRequest request,
-            @Parameter(description = "ID do árbitro que está registrando o tempo (temporário, será substituído por JWT)") @RequestHeader("X-Usuario-Id") Long usuarioId) {
+            @RequestHeader("X-Usuario-Id") Long usuarioId) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(registroTempoService.registrar(request, usuarioId));
     }
 
-    @Operation(
-        summary = "Buscar registro por ID",
-        description = "Retorna os detalhes de um registro de tempo específico, incluindo o árbitro responsável e o status de validação."
-    )
+    @Operation(summary = "Buscar registro por ID")
     @GetMapping("/{id}")
-    public ResponseEntity<RegistroTempoResponse> buscarPorId(
-            @Parameter(description = "ID do registro de tempo") @PathVariable Long id) {
+    public ResponseEntity<RegistroTempoResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(registroTempoService.buscarPorId(id));
     }
 
-    @Operation(
-        summary = "Listar registros da corrida",
-        description = "Retorna todos os tempos registrados em uma corrida. Use para exibir o placar parcial durante a corrida " +
-                      "ou para o juiz revisar e validar os tempos ao final."
-    )
+    @Operation(summary = "Listar registros",
+        description = "Informe corridaId para listar por corrida, ou edicaoId para listar todos os tempos de chegada de uma edição.")
     @GetMapping
-    public ResponseEntity<List<RegistroTempoResponse>> listarPorCorrida(
-            @Parameter(description = "ID da corrida", required = true) @RequestParam Long corridaId) {
-        return ResponseEntity.ok(registroTempoService.listarPorCorrida(corridaId));
+    public ResponseEntity<List<RegistroTempoResponse>> listar(
+            @Parameter(description = "ID da corrida") @RequestParam(required = false) Long corridaId,
+            @Parameter(description = "ID da edição") @RequestParam(required = false) Long edicaoId) {
+        if (corridaId != null) {
+            return ResponseEntity.ok(registroTempoService.listarPorCorrida(corridaId));
+        }
+        if (edicaoId != null) {
+            return ResponseEntity.ok(registroTempoService.listarPorEdicao(edicaoId));
+        }
+        return ResponseEntity.badRequest().build();
     }
 
-    @Operation(
-        summary = "Validar registro de tempo",
-        description = "O juiz confirma que o tempo registrado é válido e deve ser considerado no ranking. " +
-                      "Apenas registros validados entram no cálculo de classificação."
-    )
+    @Operation(summary = "Validar registro de tempo")
     @PatchMapping("/{id}/validar")
-    public ResponseEntity<RegistroTempoResponse> validar(
-            @Parameter(description = "ID do registro de tempo") @PathVariable Long id) {
+    public ResponseEntity<RegistroTempoResponse> validar(@PathVariable Long id) {
         return ResponseEntity.ok(registroTempoService.validar(id));
     }
 
-    @Operation(
-        summary = "Invalidar registro de tempo",
-        description = "O juiz anula um tempo registrado por erro do árbitro, falha do sensor ou infração da equipe. " +
-                      "Registros invalidados são excluídos do ranking mas mantidos no histórico para auditoria."
-    )
+    @Operation(summary = "Invalidar registro de tempo")
     @PatchMapping("/{id}/invalidar")
-    public ResponseEntity<RegistroTempoResponse> invalidar(
-            @Parameter(description = "ID do registro de tempo") @PathVariable Long id) {
+    public ResponseEntity<RegistroTempoResponse> invalidar(@PathVariable Long id) {
         return ResponseEntity.ok(registroTempoService.invalidar(id));
+    }
+
+    @Operation(summary = "Aplicar penalidade",
+        description = "Aplica uma penalidade SIMPLES (+20s) ou GRAVE (+2min) ao tempo da equipe. " +
+                      "O tempo efetivo = tempo original + penalidade e é usado no ranking.")
+    @PatchMapping("/{id}/penalidade")
+    public ResponseEntity<RegistroTempoResponse> aplicarPenalidade(
+            @PathVariable Long id,
+            @Valid @RequestBody PenalidadeRequest request) {
+        return ResponseEntity.ok(registroTempoService.aplicarPenalidade(id, request));
+    }
+
+    @Operation(summary = "Remover penalidade",
+        description = "Remove a penalidade aplicada ao registro, restaurando o tempo original.")
+    @DeleteMapping("/{id}/penalidade")
+    public ResponseEntity<RegistroTempoResponse> removerPenalidade(@PathVariable Long id) {
+        return ResponseEntity.ok(registroTempoService.removerPenalidade(id));
     }
 }

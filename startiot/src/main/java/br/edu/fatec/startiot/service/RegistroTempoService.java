@@ -5,6 +5,7 @@ import br.edu.fatec.startiot.domain.entity.Equipe;
 import br.edu.fatec.startiot.domain.entity.RegistroTempo;
 import br.edu.fatec.startiot.domain.entity.Usuario;
 import br.edu.fatec.startiot.domain.enums.StatusCorrida;
+import br.edu.fatec.startiot.dto.request.PenalidadeRequest;
 import br.edu.fatec.startiot.dto.request.RegistroTempoRequest;
 import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
@@ -40,8 +41,6 @@ public class RegistroTempoService {
 
         Equipe equipe = equipeService.buscarEntidade(request.equipeId());
 
-        // Se a corrida possui pré-alocações, apenas as equipes alocadas podem ter tempos registrados.
-        // Corridas sem nenhuma alocação mantêm o comportamento original (aceita qualquer equipe aprovada).
         if (alocacaoRepository.existsByCorridaId(corrida.getId())
                 && !alocacaoRepository.existsByCorridaIdAndEquipeId(corrida.getId(), equipe.getId())) {
             throw new BusinessException(
@@ -50,6 +49,7 @@ public class RegistroTempoService {
                     .formatted(equipe.getNome(), corrida.getId())
             );
         }
+
         Usuario usuario = usuarioService.buscarEntidade(usuarioId);
 
         RegistroTempo registro = new RegistroTempo();
@@ -76,6 +76,11 @@ public class RegistroTempoService {
         return registroTempoRepository.findByCorridaId(corridaId).stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<RegistroTempoResponse> listarPorEdicao(Long edicaoId) {
+        return registroTempoRepository.findChegadasPorEdicao(edicaoId).stream().map(this::toResponse).toList();
+    }
+
     @Transactional
     public RegistroTempoResponse validar(Long id) {
         RegistroTempo registro = buscarEntidade(id);
@@ -93,6 +98,25 @@ public class RegistroTempoService {
             throw new BusinessException("Registro de tempo já está invalidado");
         }
         registro.setValidado(false);
+        return toResponse(registroTempoRepository.save(registro));
+    }
+
+    @Transactional
+    public RegistroTempoResponse aplicarPenalidade(Long id, PenalidadeRequest request) {
+        RegistroTempo registro = buscarEntidade(id);
+        registro.setTipoPenalidade(request.tipo());
+        registro.setMotivoPenalidade(request.motivo());
+        return toResponse(registroTempoRepository.save(registro));
+    }
+
+    @Transactional
+    public RegistroTempoResponse removerPenalidade(Long id) {
+        RegistroTempo registro = buscarEntidade(id);
+        if (registro.getTipoPenalidade() == null) {
+            throw new BusinessException("Este registro não possui penalidade aplicada.");
+        }
+        registro.setTipoPenalidade(null);
+        registro.setMotivoPenalidade(null);
         return toResponse(registroTempoRepository.save(registro));
     }
 
@@ -114,6 +138,9 @@ public class RegistroTempoService {
                 r.getTipoRegistro(),
                 r.getValidado(),
                 r.getObservacoes(),
+                r.getTipoPenalidade(),
+                r.getMotivoPenalidade(),
+                r.getTempoEfetivo(),
                 r.getDataCriacao(),
                 r.getDataAtualizacao()
         );

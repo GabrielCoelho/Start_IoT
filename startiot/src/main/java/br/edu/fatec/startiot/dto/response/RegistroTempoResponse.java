@@ -1,5 +1,6 @@
 package br.edu.fatec.startiot.dto.response;
 
+import br.edu.fatec.startiot.domain.enums.TipoPenalidade;
 import br.edu.fatec.startiot.domain.enums.TipoRegistro;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,9 @@ public record RegistroTempoResponse(
         TipoRegistro tipoRegistro,
         Boolean validado,
         String observacoes,
+        TipoPenalidade tipoPenalidade,
+        String motivoPenalidade,
+        Double tempoEfetivo,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao
 ) {}

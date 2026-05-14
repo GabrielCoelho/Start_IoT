@@ -1,5 +1,6 @@
 package br.edu.fatec.startiot.domain.entity;
 
+import br.edu.fatec.startiot.domain.enums.TipoPenalidade;
 import br.edu.fatec.startiot.domain.enums.TipoRegistro;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -47,4 +48,18 @@ public class RegistroTempo extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_penalidade", length = 10)
+    private TipoPenalidade tipoPenalidade;
+
+    @Column(name = "motivo_penalidade", columnDefinition = "TEXT")
+    private String motivoPenalidade;
+
+    public double getTempoEfetivo() {
+        if (tipoPenalidade == null || tempoMilissegundos == null) {
+            return tempoMilissegundos == null ? 0.0 : tempoMilissegundos;
+        }
+        return tempoMilissegundos + tipoPenalidade.getValorMs();
+    }
 }

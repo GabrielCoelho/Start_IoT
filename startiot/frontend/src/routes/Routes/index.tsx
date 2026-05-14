@@ -7,6 +7,7 @@ import { UsuariosPage } from '../../pages/Usuarios/Usuarios';
 import { EmConstrucaoPage } from '../../pages/EmConstrucao/EmConstrucao';
 import { EquipesPage } from '../../pages/Equipes/Equipes';
 import { BateriasPage } from '../../pages/Baterias/Baterias';
+import { PenalidadesPage } from '../../pages/Penalidades/Penalidades';
 import MainLayout from '../../layout/MainLayout';
 import { getSession, type PerfilUsuario } from '../../services/auth';
 
@@ -18,6 +19,7 @@ const ROUTE_PROFILES: Record<string, PerfilUsuario[]> = {
   '/membros':       ['ADMIN', 'ORGANIZADOR'],
   '/carrinhos':     ['ADMIN', 'ORGANIZADOR'],
   '/baterias':      ['ADMIN', 'ORGANIZADOR'],
+  '/penalidades':   ['ADMIN', 'ORGANIZADOR'],
   '/corridas':      ['ADMIN', 'ORGANIZADOR', 'CRONOMETRISTA'],
   '/cronometragem': ['ADMIN', 'ORGANIZADOR', 'CRONOMETRISTA'],
   '/ranking':       ['ADMIN', 'ORGANIZADOR', 'CRONOMETRISTA'],
@@ -52,6 +54,7 @@ export const AppRoutes = () => {
           <Route path="/usuarios"      element={<ProfileRoute path="/usuarios"><UsuariosPage /></ProfileRoute>} />
           <Route path="/equipes"       element={<ProfileRoute path="/equipes"><EquipesPage /></ProfileRoute>} />
           <Route path="/baterias"      element={<ProfileRoute path="/baterias"><BateriasPage /></ProfileRoute>} />
+          <Route path="/penalidades"   element={<ProfileRoute path="/penalidades"><PenalidadesPage /></ProfileRoute>} />
           <Route path="/corridas"      element={<ProfileRoute path="/corridas"><Navigate to="/baterias" /></ProfileRoute>} />
           <Route path="/eventos"       element={<ProfileRoute path="/eventos"><EmConstrucaoPage titulo="Gestão de Eventos" /></ProfileRoute>} />
           {/* @TODO: Implementar módulo completo de Gestão de Edições (criar, editar, ciclo de vida de status) */}

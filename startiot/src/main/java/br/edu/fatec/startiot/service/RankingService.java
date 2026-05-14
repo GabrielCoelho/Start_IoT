@@ -83,11 +83,11 @@ public class RankingService {
             List<RegistroTempo> tempos, List<Bateria> todasBaterias) {
 
         double melhor = tempos.stream()
-                .mapToDouble(RegistroTempo::getTempoMilissegundos)
+                .mapToDouble(RegistroTempo::getTempoEfetivo)
                 .min().orElse(0.0);
 
         double media = tempos.stream()
-                .mapToDouble(RegistroTempo::getTempoMilissegundos)
+                .mapToDouble(RegistroTempo::getTempoEfetivo)
                 .average().orElse(0.0);
 
         // Agrupar por bateriaId
@@ -99,7 +99,7 @@ public class RankingService {
                 .map(b -> {
                     List<RegistroTempo> tb = porBateriaId.get(b.getId());
                     double melhorBateria = tb.stream()
-                            .mapToDouble(RegistroTempo::getTempoMilissegundos)
+                            .mapToDouble(RegistroTempo::getTempoEfetivo)
                             .min().orElse(0.0);
                     return new BateriaTempoItem(b.getId(), b.getNumero(), b.getTipo(), melhorBateria, tb.size());
                 })

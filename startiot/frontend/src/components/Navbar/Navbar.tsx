@@ -4,11 +4,14 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import { logout } from '../../services/auth';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import { logout, getSession } from '../../services/auth';
 
 const Navbar: any = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const session = getSession();
+  const isOrganizador = session?.perfil === 'ADMIN' || session?.perfil === 'ORGANIZADOR';
 
   const handleLogout = () => {
     logout();
@@ -58,6 +61,9 @@ const Navbar: any = () => {
         <NavButton label="Início"         path="/home"          icon={HomeOutlinedIcon} />
         <NavButton label="Cronometragem"  path="/cronometragem" icon={TimerOutlinedIcon} />
         <NavButton label="Ranking"        path="/ranking"       icon={EmojiEventsOutlinedIcon} />
+        {isOrganizador && (
+          <NavButton label="Penalidades" path="/penalidades" icon={WarningAmberOutlinedIcon} />
+        )}
       </Stack>
 
       <Button
