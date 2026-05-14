@@ -1,7 +1,9 @@
 package br.edu.fatec.startiot.controller;
 
 import br.edu.fatec.startiot.dto.request.BateriaRequest;
+import br.edu.fatec.startiot.dto.request.FinalizarBateriaRequest;
 import br.edu.fatec.startiot.dto.response.BateriaResponse;
+import br.edu.fatec.startiot.dto.response.EquipeResponse;
 import br.edu.fatec.startiot.service.BateriaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,65 +24,52 @@ public class BateriaController {
 
     private final BateriaService bateriaService;
 
-    @Operation(
-        summary = "Criar bateria",
-        description = "Cria uma nova bateria dentro de uma edição. Uma Bateria agrupa múltiplas corridas e representa uma fase da competição " +
-                      "(ex: eliminatórias, semifinal, final). Deve ser criada pelo organizador após a edição ser iniciada."
-    )
+    @Operation(summary = "Criar bateria")
     @PostMapping
     public ResponseEntity<BateriaResponse> criar(@Valid @RequestBody BateriaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bateriaService.criar(request));
     }
 
-    @Operation(
-        summary = "Buscar bateria por ID",
-        description = "Retorna os dados de uma bateria específica e seu status atual. " +
-                      "Use para verificar se a bateria está aberta para receber novas corridas."
-    )
+    @Operation(summary = "Buscar bateria por ID")
     @GetMapping("/{id}")
     public ResponseEntity<BateriaResponse> buscarPorId(
             @Parameter(description = "ID da bateria") @PathVariable Long id) {
         return ResponseEntity.ok(bateriaService.buscarPorId(id));
     }
 
-    @Operation(
-        summary = "Listar baterias da edição",
-        description = "Retorna todas as baterias de uma edição em ordem. Use para montar o painel de acompanhamento da competição, " +
-                      "exibindo o progresso de cada fase do evento."
-    )
+    @Operation(summary = "Listar baterias da edição")
     @GetMapping
     public ResponseEntity<List<BateriaResponse>> listarPorEdicao(
             @Parameter(description = "ID da edição", required = true) @RequestParam Long edicaoId) {
         return ResponseEntity.ok(bateriaService.listarPorEdicao(edicaoId));
     }
 
-    @Operation(
-        summary = "Iniciar bateria",
-        description = "Marca a bateria como em andamento. A partir deste momento, as corridas da bateria podem ser iniciadas. " +
-                      "Acione este endpoint quando a fase correspondente da competição começar no dia do evento."
-    )
+    @Operation(summary = "Equipes disponíveis para a próxima bateria",
+        description = "Retorna equipes aprovadas da edição que não foram eliminadas em baterias anteriores.")
+    @GetMapping("/{id}/equipes-disponiveis")
+    public ResponseEntity<List<EquipeResponse>> listarEquipesDisponiveis(
+            @Parameter(description = "ID da bateria") @PathVariable Long id) {
+        return ResponseEntity.ok(bateriaService.listarEquipesDisponiveis(id));
+    }
+
+    @Operation(summary = "Iniciar bateria")
     @PatchMapping("/{id}/iniciar")
     public ResponseEntity<BateriaResponse> iniciar(
             @Parameter(description = "ID da bateria") @PathVariable Long id) {
         return ResponseEntity.ok(bateriaService.iniciar(id));
     }
 
-    @Operation(
-        summary = "Finalizar bateria",
-        description = "Encerra a bateria após todas as corridas serem concluídas. Nenhuma nova corrida pode ser adicionada após este ponto. " +
-                      "O sistema pode calcular os classificados para a próxima fase."
-    )
+    @Operation(summary = "Finalizar bateria",
+        description = "Encerra a bateria. Se posicaoCorte for informado, equipes abaixo dessa posição " +
+                      "são eliminadas e não aparecerão para alocação nas baterias seguintes.")
     @PatchMapping("/{id}/finalizar")
     public ResponseEntity<BateriaResponse> finalizar(
-            @Parameter(description = "ID da bateria") @PathVariable Long id) {
-        return ResponseEntity.ok(bateriaService.finalizar(id));
+            @Parameter(description = "ID da bateria") @PathVariable Long id,
+            @RequestBody(required = false) FinalizarBateriaRequest request) {
+        return ResponseEntity.ok(bateriaService.finalizar(id, request));
     }
 
-    @Operation(
-        summary = "Cancelar bateria",
-        description = "Cancela uma bateria por motivo de força maior (problema técnico, condições climáticas, etc.). " +
-                      "As corridas vinculadas também são desconsideradas para o ranking."
-    )
+    @Operation(summary = "Cancelar bateria")
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<BateriaResponse> cancelar(
             @Parameter(description = "ID da bateria") @PathVariable Long id) {

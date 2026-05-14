@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip,
-  CircularProgress, Divider, IconButton, MenuItem, Paper, Stack,
+  CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
+  Divider, IconButton, InputAdornment, MenuItem, Paper, Stack,
   TextField, Tooltip, Typography,
 } from '@mui/material';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
@@ -15,9 +16,10 @@ import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 
 import { listarEventos, type EventoResponse } from '../../services/eventos';
 import { listarEdicoesPorEvento, type EdicaoResponse } from '../../services/edicoes';
-import { listarEquipesPorEdicao, type EquipeResponse } from '../../services/equipes';
+import { type EquipeResponse } from '../../services/equipes';
 import {
   criarBateria, listarBaterias, iniciarBateria, finalizarBateria, cancelarBateria,
+  listarEquipesDisponiveisBateria,
   type BateriaResponse,
 } from '../../services/baterias';
 import {
@@ -117,24 +119,31 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({ edicaoId, onEdicaoCha
 
 interface AlocacaoManagerProps {
   corrida: CorridaResponse;
-  equipes: EquipeResponse[];
+  bateriaId: number;
 }
 
-const AlocacaoManager: React.FC<AlocacaoManagerProps> = ({ corrida, equipes }) => {
+const AlocacaoManager: React.FC<AlocacaoManagerProps> = ({ corrida, bateriaId }) => {
   const [alocacoes, setAlocacoes] = useState<AlocacaoResponse[]>([]);
+  const [equipesDisponiveis, setEquipesDisponiveis] = useState<EquipeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [equipeId, setEquipeId] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<number | null>(null);
 
   const reload = useCallback(() => {
-    listarAlocacoes(corrida.id).then(setAlocacoes).catch(() => {}).finally(() => setLoading(false));
-  }, [corrida.id]);
+    Promise.all([
+      listarAlocacoes(corrida.id),
+      listarEquipesDisponiveisBateria(bateriaId),
+    ]).then(([alocs, equipes]) => {
+      setAlocacoes(alocs);
+      setEquipesDisponiveis(equipes);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, [corrida.id, bateriaId]);
 
   useEffect(() => { reload(); }, [reload]);
 
   const alocadasIds = new Set(alocacoes.map(a => a.equipeId));
-  const disponiveis = equipes.filter(e => e.statusInscricao === 'APROVADA' && !alocadasIds.has(e.id));
+  const disponiveis = equipesDisponiveis.filter(e => !alocadasIds.has(e.id));
 
   const handleAlocar = async () => {
     if (!equipeId) return;
@@ -198,14 +207,13 @@ const AlocacaoManager: React.FC<AlocacaoManagerProps> = ({ corrida, equipes }) =
 
 interface CorridaRowProps {
   corrida: CorridaResponse;
-  equipes: EquipeResponse[];
   bateriaId: number;
   nextOrdem: number;
   onChange: (updated: CorridaResponse) => void;
   onReplicada: (nova: CorridaResponse) => void;
 }
 
-const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, bateriaId, nextOrdem, onChange, onReplicada }) => {
+const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, bateriaId, nextOrdem, onChange, onReplicada }) => {
   const [acting, setActing] = useState(false);
   const [replicando, setReplicando] = useState(false);
 
@@ -288,7 +296,7 @@ const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, bateriaId, ne
         </Stack>
       </Stack>
 
-      <AlocacaoManager corrida={corrida} equipes={equipes} />
+      <AlocacaoManager corrida={corrida} bateriaId={bateriaId} />
     </Paper>
   );
 };
@@ -297,15 +305,18 @@ const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, bateriaId, ne
 
 interface BateriaCardProps {
   bateria: BateriaResponse;
-  equipes: EquipeResponse[];
   onChange: (updated: BateriaResponse) => void;
 }
 
-const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange }) => {
+const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, onChange }) => {
   const [corridas, setCorridas] = useState<CorridaResponse[]>([]);
   const [loadingCorridas, setLoadingCorridas] = useState(true);
   const [acting, setActing] = useState(false);
   const [addingCorrida, setAddingCorrida] = useState(false);
+
+  // Dialog de finalização com corte
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [posicaoCorte, setPosicaoCorte] = useState('');
 
   const reloadCorridas = useCallback(() => {
     listarCorridas(bateria.id)
@@ -325,6 +336,13 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
     try { onChange(await fn()); } catch {} finally { setActing(false); }
   };
 
+  const handleConfirmarFinalizar = async () => {
+    const corte = posicaoCorte ? parseInt(posicaoCorte, 10) : undefined;
+    setDialogAberto(false);
+    setPosicaoCorte('');
+    await actBateria(() => finalizarBateria(bateria.id, corte));
+  };
+
   const handleAddCorrida = async () => {
     setAddingCorrida(true);
     try {
@@ -341,12 +359,42 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
     setCorridas(prev => [...prev, nova].sort((a, b) => a.ordem - b.ordem));
 
   const chip = BATERIA_CHIP[bateria.status];
-  const podeIniciar   = bateria.status === 'AGUARDANDO';
-  const podeFinalizar = bateria.status === 'EM_ANDAMENTO';
-  const podeCancelar  = bateria.status === 'AGUARDANDO' || bateria.status === 'EM_ANDAMENTO';
+  const podeIniciar    = bateria.status === 'AGUARDANDO';
+  const podeFinalizar  = bateria.status === 'EM_ANDAMENTO';
+  const podeCancelar   = bateria.status === 'AGUARDANDO' || bateria.status === 'EM_ANDAMENTO';
   const podeAddCorrida = bateria.status === 'AGUARDANDO' || bateria.status === 'EM_ANDAMENTO';
 
   return (
+    <>
+    {/* Dialog de finalização */}
+    <Dialog open={dialogAberto} onClose={() => setDialogAberto(false)} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ fontWeight: 800 }}>
+        Finalizar Bateria #{bateria.numero}{bateria.tipo ? ` — ${bateria.tipo}` : ''}
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Informe quantas equipes avançam para a próxima fase. As equipes abaixo dessa posição
+          serão eliminadas e não aparecerão para alocação nas baterias seguintes.
+        </Typography>
+        <TextField
+          autoFocus fullWidth size="small"
+          label="Posição de corte"
+          placeholder="Ex: 6 (top 6 avançam)"
+          value={posicaoCorte}
+          onChange={e => setPosicaoCorte(e.target.value.replace(/\D/g, ''))}
+          helperText="Deixe em branco para finalizar sem eliminações"
+          InputProps={{ endAdornment: posicaoCorte ? <InputAdornment position="end">equipes avançam</InputAdornment> : null }}
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={() => { setDialogAberto(false); setPosicaoCorte(''); }}>Cancelar</Button>
+        <Button variant="contained" onClick={handleConfirmarFinalizar}
+          sx={{ bgcolor: '#1565C0', '&:hover': { bgcolor: '#0d47a1' }, fontWeight: 700 }}>
+          Confirmar
+        </Button>
+      </DialogActions>
+    </Dialog>
+
     <Accordion elevation={0} sx={{ border: '1px solid #E0E0E6', borderRadius: '12px !important', '&:before': { display: 'none' } }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 3 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between"
@@ -377,7 +425,7 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
             {podeFinalizar && (
               <Tooltip title="Finalizar bateria">
                 <span>
-                  <IconButton size="small" disabled={acting} onClick={() => actBateria(() => finalizarBateria(bateria.id))}
+                  <IconButton size="small" disabled={acting} onClick={() => setDialogAberto(true)}
                     sx={{ color: '#1565C0' }}>
                     <StopOutlinedIcon fontSize="small" />
                   </IconButton>
@@ -411,7 +459,6 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
                     <CorridaRow
                       key={c.id}
                       corrida={c}
-                      equipes={equipes}
                       bateriaId={bateria.id}
                       nextOrdem={corridas.length + 1}
                       onChange={updateCorrida}
@@ -434,6 +481,7 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
         }
       </AccordionDetails>
     </Accordion>
+    </>
   );
 };
 
@@ -517,7 +565,6 @@ const BateriasPage: React.FC = () => {
   const [edicaoId, setEdicaoId] = useState<number | null>(null);
   const [dataEvento, setDataEvento] = useState<string | undefined>();
   const [baterias, setBaterias] = useState<BateriaResponse[]>([]);
-  const [equipes, setEquipes] = useState<EquipeResponse[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleEdicaoChange = (id: number | null, data?: string) => {
@@ -526,17 +573,13 @@ const BateriasPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!edicaoId) { setBaterias([]); setEquipes([]); return; }
+    if (!edicaoId) { setBaterias([]); return; }
 
     const carregarTudo = (inicial = false) => {
       if (inicial) setLoading(true);
-      Promise.all([
-        listarBaterias(edicaoId),
-        listarEquipesPorEdicao(edicaoId),
-      ]).then(([b, e]) => {
-        setBaterias(b.sort((a, b) => a.numero - b.numero));
-        setEquipes(e);
-      }).catch(() => {}).finally(() => { if (inicial) setLoading(false); });
+      listarBaterias(edicaoId)
+        .then(b => setBaterias(b.sort((a, b) => a.numero - b.numero)))
+        .catch(() => {}).finally(() => { if (inicial) setLoading(false); });
     };
 
     carregarTudo(true);
@@ -584,7 +627,7 @@ const BateriasPage: React.FC = () => {
             : (
               <Stack spacing={2}>
                 {baterias.map(b => (
-                  <BateriaCard key={b.id} bateria={b} equipes={equipes} onChange={handleBateriaAtualizada} />
+                  <BateriaCard key={b.id} bateria={b} onChange={handleBateriaAtualizada} />
                 ))}
               </Stack>
             )
