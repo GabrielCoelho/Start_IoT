@@ -31,4 +31,7 @@ public class Carrinho extends BaseEntity {
 
     @Column(name = "data_vistoria")
     private LocalDateTime dataVistoria;
+
+    @Column(name = "penalide_vistoria", nullable = false)
+    private Boolean penalideVistoria = false;
 }

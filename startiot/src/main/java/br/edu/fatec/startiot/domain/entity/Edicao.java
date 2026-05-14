@@ -27,6 +27,9 @@ public class Edicao extends BaseEntity {
     @Column(nullable = false)
     private Integer ano;
 
+    @Column
+    private Integer numero;
+
     @Column(name = "data_evento")
     private LocalDate dataEvento;
 

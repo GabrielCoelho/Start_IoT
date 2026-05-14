@@ -6,7 +6,6 @@ import br.edu.fatec.startiot.domain.enums.StatusEdicao;
 import br.edu.fatec.startiot.dto.request.EdicaoRequest;
 import br.edu.fatec.startiot.dto.response.EdicaoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
-import br.edu.fatec.startiot.exception.ConflictException;
 import br.edu.fatec.startiot.exception.NotFoundException;
 import br.edu.fatec.startiot.repository.EdicaoRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +25,10 @@ public class EdicaoService {
     public EdicaoResponse criar(EdicaoRequest request) {
         Evento evento = eventoService.buscarEntidade(request.eventoId());
 
-        if (edicaoRepository.existsByEventoIdAndAno(request.eventoId(), request.ano())) {
-            throw new ConflictException(
-                    "Já existe uma edição do evento '%s' para o ano %d".formatted(evento.getNome(), request.ano())
-            );
-        }
-
         Edicao edicao = new Edicao();
         edicao.setEvento(evento);
         edicao.setAno(request.ano());
+        edicao.setNumero(request.numero());
         edicao.setDataEvento(request.dataEvento());
         edicao.setStatus(request.status());
 
@@ -90,6 +84,7 @@ public class EdicaoService {
                 e.getEvento().getId(),
                 e.getEvento().getNome(),
                 e.getAno(),
+                e.getNumero(),
                 e.getDataEvento(),
                 e.getStatus(),
                 e.getEquipes().size(),

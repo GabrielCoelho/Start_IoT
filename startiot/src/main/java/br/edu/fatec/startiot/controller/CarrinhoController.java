@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Carrinhos", description = "Cadastro e vistoria dos carrinhos IoT de cada equipe")
 @RestController
 @RequestMapping("/api/carrinhos")
@@ -20,6 +22,14 @@ import org.springframework.web.bind.annotation.*;
 public class CarrinhoController {
 
     private final CarrinhoService carrinhoService;
+
+    @Operation(summary = "Listar carrinhos por edição",
+        description = "Retorna todos os carrinhos cadastrados pelas equipes de uma edição, com status de vistoria.")
+    @GetMapping
+    public ResponseEntity<List<CarrinhoResponse>> listarPorEdicao(
+            @Parameter(description = "ID da edição") @RequestParam Long edicaoId) {
+        return ResponseEntity.ok(carrinhoService.listarPorEdicao(edicaoId));
+    }
 
     @Operation(
         summary = "Cadastrar carrinho",

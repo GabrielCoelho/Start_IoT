@@ -13,6 +13,8 @@ public record EdicaoRequest(
         @NotNull(message = "Ano é obrigatório")
         Integer ano,
 
+        Integer numero,
+
         LocalDate dataEvento,
 
         @NotNull(message = "Status é obrigatório")

@@ -101,7 +101,7 @@ class CarrinhoServiceTest {
         when(carrinhoRepository.findByEquipeId(1L)).thenReturn(Optional.of(carrinho));
         when(carrinhoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        CarrinhoResponse response = carrinhoService.registrarVistoria(1L, new VistoriaRequest(true, "Tudo ok"));
+        CarrinhoResponse response = carrinhoService.registrarVistoria(1L, new VistoriaRequest(true, null, "Tudo ok"));
 
         assertThat(response.aprovadoVistoria()).isTrue();
         assertThat(response.observacoesVistoria()).isEqualTo("Tudo ok");
@@ -115,7 +115,7 @@ class CarrinhoServiceTest {
         when(carrinhoRepository.findByEquipeId(1L)).thenReturn(Optional.of(carrinho));
         when(carrinhoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        CarrinhoResponse response = carrinhoService.registrarVistoria(1L, new VistoriaRequest(false, "Freio irregular"));
+        CarrinhoResponse response = carrinhoService.registrarVistoria(1L, new VistoriaRequest(false, null, "Freio irregular"));
 
         assertThat(response.aprovadoVistoria()).isFalse();
         assertThat(response.observacoesVistoria()).isEqualTo("Freio irregular");

@@ -2,6 +2,7 @@ package br.edu.fatec.startiot.service;
 
 import br.edu.fatec.startiot.domain.entity.Carrinho;
 import br.edu.fatec.startiot.domain.entity.Equipe;
+import br.edu.fatec.startiot.domain.enums.StatusEquipe;
 import br.edu.fatec.startiot.dto.request.CarrinhoRequest;
 import br.edu.fatec.startiot.dto.request.VistoriaRequest;
 import br.edu.fatec.startiot.dto.response.CarrinhoResponse;
@@ -11,6 +12,8 @@ import br.edu.fatec.startiot.repository.CarrinhoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -51,17 +54,31 @@ public class CarrinhoService {
 
     @Transactional
     public CarrinhoResponse registrarVistoria(Long equipeId, VistoriaRequest request) {
-        equipeService.buscarEntidade(equipeId);
+        Equipe equipe = equipeService.buscarEntidade(equipeId);
         Carrinho carrinho = carrinhoRepository.findByEquipeId(equipeId)
                 .orElseThrow(() -> new NotFoundException(
                         "Carrinho não encontrado para a equipe de id %d".formatted(equipeId)
                 ));
 
-        carrinho.setAprovadoVistoria(request.aprovado());
+        boolean aprovado = Boolean.TRUE.equals(request.aprovado());
+        carrinho.setAprovadoVistoria(aprovado);
+        carrinho.setPenalideVistoria(Boolean.TRUE.equals(request.penalidade()) && aprovado);
         carrinho.setObservacoesVistoria(request.observacoes());
         carrinho.setDataVistoria(LocalDateTime.now());
 
+        if (!aprovado) {
+            equipeService.atualizarStatusPorVistoria(equipe.getId(), StatusEquipe.REPROVADA);
+        } else if (equipe.getStatusInscricao() == StatusEquipe.REPROVADA) {
+            equipeService.atualizarStatusPorVistoria(equipe.getId(), StatusEquipe.APROVADA);
+        }
+
         return toResponse(carrinhoRepository.save(carrinho));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CarrinhoResponse> listarPorEdicao(Long edicaoId) {
+        return carrinhoRepository.findByEquipeEdicaoId(edicaoId)
+                .stream().map(this::toResponse).toList();
     }
 
     private CarrinhoResponse toResponse(Carrinho c) {
@@ -71,6 +88,7 @@ public class CarrinhoService {
                 c.getEquipe().getNome(),
                 c.getIdentificacao(),
                 c.getAprovadoVistoria(),
+                c.getPenalideVistoria(),
                 c.getObservacoesVistoria(),
                 c.getDataVistoria(),
                 c.getDataCriacao(),

@@ -19,6 +19,7 @@ public record RegistroTempoResponse(
         String observacoes,
         TipoPenalidade tipoPenalidade,
         String motivoPenalidade,
+        Boolean penalideVistoria,
         Double tempoEfetivo,
         LocalDateTime dataCriacao,
         LocalDateTime dataAtualizacao

@@ -14,5 +14,7 @@ public interface CarrinhoRepository extends JpaRepository<Carrinho, Long> {
 
     List<Carrinho> findByAprovadoVistoria(Boolean aprovado);
 
+    List<Carrinho> findByEquipeEdicaoId(Long edicaoId);
+
     boolean existsByEquipeId(Long equipeId);
 }

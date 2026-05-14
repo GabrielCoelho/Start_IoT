@@ -5,6 +5,7 @@ export type StatusEdicao = 'PLANEJADA' | 'EM_ANDAMENTO' | 'FINALIZADA' | 'CANCEL
 export interface EdicaoRequest {
   eventoId: number;
   ano: number;
+  numero?: number;
   dataEvento?: string;
   status: StatusEdicao;
 }
@@ -14,6 +15,7 @@ export interface EdicaoResponse {
   eventoId: number;
   eventoNome: string;
   ano: number;
+  numero?: number;
   dataEvento?: string;
   status: StatusEdicao;
   totalEquipes: number;

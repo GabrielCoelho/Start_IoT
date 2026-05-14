@@ -601,25 +601,6 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
             </Box>
           </Stack>
 
-          {/* Mini-lista das chegadas registradas */}
-          {stops.length > 0 && (
-            <Box sx={{ mt: 3 }}>
-              <Divider sx={{ bgcolor: 'rgba(255,255,255,0.1)', mb: 2 }} />
-              <Typography variant="caption" sx={{ opacity: 0.4, display: 'block', mb: 1 }}>
-                Tempos capturados
-              </Typography>
-              <Stack spacing={0.5}>
-                {stops.map((ms, i) => (
-                  <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="caption" sx={{ opacity: 0.5 }}>{posLabel(i)}</Typography>
-                    <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#4ade80', fontWeight: 700 }}>
-                      {formatMs(ms)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Box>
-          )}
         </Box>
 
         <Stack spacing={2} sx={{ mt: 4 }}>
@@ -681,6 +662,30 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
         </Typography>
 
         {erro && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{erro}</Alert>}
+
+        {/* Tempos capturados */}
+        {stops.length > 0 && (
+          <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: '1px solid #E0E0E6', mb: 3 }}>
+            <Typography variant="overline" sx={{ color: '#9A9AAF', letterSpacing: 1, fontSize: '0.65rem', display: 'block', mb: 1 }}>
+              Tempos capturados ({stops.length}/{teams.length})
+            </Typography>
+            <Stack spacing={0.75}>
+              {stops.map((ms, i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography sx={{
+                    fontWeight: 900, minWidth: 28, fontSize: '0.8rem',
+                    color: i === 0 ? '#F5A623' : i === 1 ? '#A8A9AD' : i === 2 ? '#CD7F32' : '#9A9AAF',
+                  }}>
+                    {posLabel(i)}
+                  </Typography>
+                  <Typography sx={{ fontFamily: 'monospace', fontWeight: 800, color: '#22B573', fontSize: '1rem' }}>
+                    {formatMs(ms)}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Paper>
+        )}
 
         {loadingTeams
           ? <Box sx={{ textAlign: 'center', py: 6 }}><CircularProgress /></Box>

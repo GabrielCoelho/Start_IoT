@@ -9,6 +9,8 @@ import br.edu.fatec.startiot.dto.response.EquipeResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
 import br.edu.fatec.startiot.exception.ConflictException;
 import br.edu.fatec.startiot.exception.NotFoundException;
+import br.edu.fatec.startiot.domain.entity.Carrinho;
+import br.edu.fatec.startiot.repository.CarrinhoRepository;
 import br.edu.fatec.startiot.repository.EquipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.List;
 public class EquipeService {
 
     private final EquipeRepository equipeRepository;
+    private final CarrinhoRepository carrinhoRepository;
     private final EdicaoService edicaoService;
 
     @Transactional
@@ -69,7 +72,25 @@ public class EquipeService {
 
     @Transactional
     public EquipeResponse aprovar(Long id) {
-        return alterarStatus(id, StatusEquipe.APROVADA, StatusEquipe.PENDENTE, "aprovar");
+        Equipe equipe = buscarEntidade(id);
+        if (equipe.getStatusInscricao() != StatusEquipe.PENDENTE) {
+            throw new BusinessException(
+                    "Não é possível aprovar uma equipe com status '%s'".formatted(equipe.getStatusInscricao())
+            );
+        }
+        equipe.setStatusInscricao(StatusEquipe.APROVADA);
+        equipeRepository.save(equipe);
+
+        if (!carrinhoRepository.existsByEquipeId(equipe.getId())) {
+            Carrinho carrinho = new Carrinho();
+            carrinho.setEquipe(equipe);
+            carrinho.setIdentificacao(equipe.getNome());
+            carrinho.setAprovadoVistoria(false);
+            carrinho.setPenalideVistoria(false);
+            carrinhoRepository.save(carrinho);
+        }
+
+        return toResponse(equipe);
     }
 
     @Transactional
@@ -85,6 +106,13 @@ public class EquipeService {
         }
         equipe.setStatusInscricao(StatusEquipe.CANCELADA);
         return toResponse(equipeRepository.save(equipe));
+    }
+
+    @Transactional
+    public void atualizarStatusPorVistoria(Long equipeId, StatusEquipe novoStatus) {
+        Equipe equipe = buscarEntidade(equipeId);
+        equipe.setStatusInscricao(novoStatus);
+        equipeRepository.save(equipe);
     }
 
     public Equipe buscarEntidade(Long id) {

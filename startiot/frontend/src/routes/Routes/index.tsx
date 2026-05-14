@@ -8,6 +8,7 @@ import { EmConstrucaoPage } from '../../pages/EmConstrucao/EmConstrucao';
 import { EquipesPage } from '../../pages/Equipes/Equipes';
 import { BateriasPage } from '../../pages/Baterias/Baterias';
 import { PenalidadesPage } from '../../pages/Penalidades/Penalidades';
+import { VistoriaPage } from '../../pages/Vistoria/Vistoria';
 import { EventosPage } from '../../pages/Eventos/Eventos';
 import { EdicoesPage } from '../../pages/Edicoes/Edicoes';
 import MainLayout from '../../layout/MainLayout';
@@ -61,7 +62,7 @@ export const AppRoutes = () => {
           <Route path="/eventos"       element={<ProfileRoute path="/eventos"><EventosPage /></ProfileRoute>} />
           <Route path="/edicoes"       element={<ProfileRoute path="/edicoes"><EdicoesPage /></ProfileRoute>} />
           <Route path="/membros"       element={<ProfileRoute path="/membros"><EmConstrucaoPage titulo="Gestão de Membros" /></ProfileRoute>} />
-          <Route path="/carrinhos"     element={<ProfileRoute path="/carrinhos"><EmConstrucaoPage titulo="Vistoria Técnica de Carrinhos" /></ProfileRoute>} />
+          <Route path="/carrinhos"     element={<ProfileRoute path="/carrinhos"><VistoriaPage /></ProfileRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" />} />

@@ -10,6 +10,7 @@ public record EdicaoResponse(
         Long eventoId,
         String eventoNome,
         Integer ano,
+        Integer numero,
         LocalDate dataEvento,
         StatusEdicao status,
         Integer totalEquipes,

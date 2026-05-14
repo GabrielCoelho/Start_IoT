@@ -4,12 +4,12 @@ export type TipoRegistro = 'LARGADA' | 'CHEGADA' | 'MANUAL' | 'AUTOMATICO';
 export type TipoPenalidade = 'SIMPLES' | 'GRAVE';
 
 export const PENALIDADE_MS: Record<TipoPenalidade, number> = {
-  SIMPLES: 20_000,
+  SIMPLES: 10_000,
   GRAVE:  120_000,
 };
 
 export const PENALIDADE_LABEL: Record<TipoPenalidade, string> = {
-  SIMPLES: '+20s — Simples',
+  SIMPLES: '+10s — Simples',
   GRAVE:   '+2min — Grave',
 };
 

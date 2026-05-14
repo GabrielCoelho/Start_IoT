@@ -12,6 +12,7 @@ import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
 import br.edu.fatec.startiot.exception.NotFoundException;
 import br.edu.fatec.startiot.repository.AlocacaoEquipeCorridaRepository;
+import br.edu.fatec.startiot.repository.CarrinhoRepository;
 import br.edu.fatec.startiot.repository.RegistroTempoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class RegistroTempoService {
 
     private final RegistroTempoRepository registroTempoRepository;
     private final AlocacaoEquipeCorridaRepository alocacaoRepository;
+    private final CarrinhoRepository carrinhoRepository;
     private final CorridaService corridaService;
     private final EquipeService equipeService;
     private final UsuarioService usuarioService;
@@ -92,6 +94,10 @@ public class RegistroTempoService {
             registro.setTipoPenalidade(request.tipoPenalidade());
             registro.setMotivoPenalidade(request.motivo());
         }
+        boolean temPenalideVistoria = carrinhoRepository.findByEquipeId(registro.getEquipe().getId())
+                .map(c -> Boolean.TRUE.equals(c.getPenalideVistoria()))
+                .orElse(false);
+        registro.setPenalideVistoria(temPenalideVistoria);
         registro.setValidado(true);
         return toResponse(registroTempoRepository.save(registro));
     }
@@ -151,6 +157,7 @@ public class RegistroTempoService {
                 r.getObservacoes(),
                 r.getTipoPenalidade(),
                 r.getMotivoPenalidade(),
+                r.getPenalideVistoria(),
                 r.getTempoEfetivo(),
                 r.getDataCriacao(),
                 r.getDataAtualizacao()

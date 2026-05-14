@@ -56,10 +56,14 @@ public class RegistroTempo extends BaseEntity {
     @Column(name = "motivo_penalidade", columnDefinition = "TEXT")
     private String motivoPenalidade;
 
+    @Column(name = "penalide_vistoria", nullable = false)
+    private Boolean penalideVistoria = false;
+
     public double getTempoEfetivo() {
-        if (tipoPenalidade == null || tempoMilissegundos == null) {
-            return tempoMilissegundos == null ? 0.0 : tempoMilissegundos;
-        }
-        return tempoMilissegundos + tipoPenalidade.getValorMs();
+        if (tempoMilissegundos == null) return 0.0;
+        double base = tempoMilissegundos;
+        if (tipoPenalidade != null) base += tipoPenalidade.getValorMs();
+        if (Boolean.TRUE.equals(penalideVistoria)) base += 5_000L;
+        return base;
     }
 }

@@ -10,6 +10,7 @@ import br.edu.fatec.startiot.dto.response.EquipeResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
 import br.edu.fatec.startiot.exception.ConflictException;
 import br.edu.fatec.startiot.exception.NotFoundException;
+import br.edu.fatec.startiot.repository.CarrinhoRepository;
 import br.edu.fatec.startiot.repository.EquipeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.when;
 class EquipeServiceTest {
 
     @Mock private EquipeRepository equipeRepository;
+    @Mock private CarrinhoRepository carrinhoRepository;
     @Mock private EdicaoService edicaoService;
     @InjectMocks private EquipeService equipeService;
 

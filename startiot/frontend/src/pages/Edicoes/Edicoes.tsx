@@ -38,7 +38,10 @@ const TRANSICOES: Record<StatusEdicao, { label: string; status: StatusEdicao; co
 const ANO_ATUAL = new Date().getFullYear();
 const ANOS = Array.from({ length: 6 }, (_, i) => ANO_ATUAL - 2 + i);
 
-const EMPTY_FORM = { ano: String(ANO_ATUAL), dataEvento: '', status: 'PLANEJADA' as StatusEdicao };
+const EMPTY_FORM = { ano: String(ANO_ATUAL), numero: '', dataEvento: '', status: 'PLANEJADA' as StatusEdicao };
+
+const labelEdicao = (ed: { numero?: number; ano: number }) =>
+  ed.numero ? `${ed.numero}ª Edição — ${ed.ano}` : String(ed.ano);
 
 const formatDate = (iso?: string) => {
   if (!iso) return null;
@@ -89,7 +92,8 @@ const gerarCsv = async (edicao: EdicaoResponse): Promise<void> => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ranking_${ranking.nomeEvento.replace(/\s+/g, '_')}_${edicao.ano}.csv`;
+  const sufixo = edicao.numero ? `${edicao.numero}a_edicao_${edicao.ano}` : String(edicao.ano);
+  link.download = `ranking_${ranking.nomeEvento.replace(/\s+/g, '_')}_${sufixo}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 };
@@ -123,7 +127,7 @@ const EdicoesPage: React.FC = () => {
     if (!eventoId) return;
     setLoadingEdicoes(true);
     listarEdicoesPorEvento(eventoId as number)
-      .then(eds => setEdicoes(eds.sort((a, b) => b.ano - a.ano)))
+      .then(eds => setEdicoes(eds.sort((a, b) => (b.numero ?? b.ano) - (a.numero ?? a.ano))))
       .catch(() => {})
       .finally(() => setLoadingEdicoes(false));
   }, [eventoId]);
@@ -138,10 +142,12 @@ const EdicoesPage: React.FC = () => {
       await criarEdicao({
         eventoId: eventoId as number,
         ano: Number(form.ano),
+        numero: form.numero ? Number(form.numero) : undefined,
         dataEvento: form.dataEvento || undefined,
         status: form.status,
       });
-      setSuccess(`Edição ${form.ano} criada com sucesso.`);
+      const label = form.numero ? `${form.numero}ª Edição de ${form.ano}` : `Edição ${form.ano}`;
+      setSuccess(`${label} criada com sucesso.`);
       setDialogAberto(false);
       setForm(EMPTY_FORM);
       reloadEdicoes();
@@ -249,7 +255,7 @@ const EdicoesPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <CalendarMonthOutlinedIcon sx={{ color: '#80DEEA', fontSize: 18 }} />
                     <Typography sx={{ fontWeight: 800, color: 'white', fontSize: 15 }}>
-                      {ed.eventoNome} — {ed.ano}
+                      {ed.eventoNome} — {labelEdicao(ed)}
                     </Typography>
                     <Chip label={chip.label} size="small" color={chip.color} />
                   </Box>
@@ -313,7 +319,7 @@ const EdicoesPage: React.FC = () => {
       {/* Dialog de confirmação de finalização */}
       <Dialog open={!!confirmandoFinalizar} onClose={() => setConfirmandoFinalizar(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>
-          Finalizar edição {confirmandoFinalizar?.ano}
+          Finalizar {confirmandoFinalizar ? labelEdicao(confirmandoFinalizar) : ''}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -350,6 +356,14 @@ const EdicoesPage: React.FC = () => {
               disabled={saving}>
               {ANOS.map(a => <MenuItem key={a} value={String(a)}>{a}</MenuItem>)}
             </TextField>
+
+            <TextField fullWidth label="Número da edição" size="small"
+              value={form.numero}
+              onChange={e => setForm(f => ({ ...f, numero: e.target.value.replace(/\D/g, '') }))}
+              disabled={saving}
+              placeholder="ex: 11"
+              helperText="Opcional — ex: 11 para &quot;11ª Edição&quot;"
+              slotProps={{ input: { inputMode: 'numeric' } }} />
 
             <TextField fullWidth label="Data do evento" type="date" size="small"
               value={form.dataEvento}

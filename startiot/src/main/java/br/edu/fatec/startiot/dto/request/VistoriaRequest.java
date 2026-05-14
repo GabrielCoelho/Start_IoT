@@ -7,5 +7,7 @@ public record VistoriaRequest(
         @NotNull(message = "Resultado da vistoria é obrigatório")
         Boolean aprovado,
 
+        Boolean penalidade,
+
         String observacoes
 ) {}

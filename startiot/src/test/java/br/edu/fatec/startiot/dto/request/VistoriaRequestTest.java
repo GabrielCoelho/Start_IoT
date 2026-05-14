@@ -26,19 +26,19 @@ class VistoriaRequestTest {
 
     @Test
     void devePassarComAprovacaoTrue() {
-        var request = new VistoriaRequest(true, "Tudo ok");
+        var request = new VistoriaRequest(true, null, "Tudo ok");
         assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test
     void devePassarComReprovacaoSemObservacoes() {
-        var request = new VistoriaRequest(false, null);
+        var request = new VistoriaRequest(false, null, null);
         assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test
     void deveRejeitarAprovadoNulo() {
-        var request = new VistoriaRequest(null, "obs");
+        var request = new VistoriaRequest(null, null, "obs");
         assertThat(campos(validator.validate(request))).contains("aprovado");
     }
 }

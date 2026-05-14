@@ -8,6 +8,7 @@ public record CarrinhoResponse(
         String equipeNome,
         String identificacao,
         Boolean aprovadoVistoria,
+        Boolean penalideVistoria,
         String observacoesVistoria,
         LocalDateTime dataVistoria,
         LocalDateTime dataCriacao,

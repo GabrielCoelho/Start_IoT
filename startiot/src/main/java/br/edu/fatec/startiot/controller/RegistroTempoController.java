@@ -64,7 +64,7 @@ public class RegistroTempoController {
     }
 
     @Operation(summary = "Validar registro de tempo",
-        description = "Valida o tempo, marcando-o para o ranking. Opcionalmente aplica penalidade SIMPLES (+20s) ou GRAVE (+2min).")
+        description = "Valida o tempo, marcando-o para o ranking. Opcionalmente aplica penalidade SIMPLES (+10s) ou GRAVE (+2min).")
     @PatchMapping("/{id}/validar")
     public ResponseEntity<RegistroTempoResponse> validar(
             @PathVariable Long id,
@@ -79,7 +79,7 @@ public class RegistroTempoController {
     }
 
     @Operation(summary = "Aplicar penalidade",
-        description = "Aplica uma penalidade SIMPLES (+20s) ou GRAVE (+2min) ao tempo da equipe. " +
+        description = "Aplica uma penalidade SIMPLES (+10s) ou GRAVE (+2min) ao tempo da equipe. " +
                       "O tempo efetivo = tempo original + penalidade e é usado no ranking.")
     @PatchMapping("/{id}/penalidade")
     public ResponseEntity<RegistroTempoResponse> aplicarPenalidade(

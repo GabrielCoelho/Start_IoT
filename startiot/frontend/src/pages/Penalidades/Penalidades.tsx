@@ -15,6 +15,7 @@ import {
   listarPendentes, validarTempo,
   type RegistroTempoResponse,
 } from '../../services/registros';
+import { listarCarrinhosPorEdicao, type CarrinhoResponse } from '../../services/carrinhos';
 
 const POLL_INTERVAL = 5000;
 
@@ -27,12 +28,15 @@ const formatMs = (ms: number) => {
 
 // ─── LINHA DE REGISTRO ────────────────────────────────────────────────────────
 
+const PENALIDE_VISTORIA_MS = 5_000;
+
 interface RegistroRowProps {
   registro: RegistroTempoResponse;
+  penalideVistoria: boolean;
   onValidado: (id: number) => void;
 }
 
-const RegistroRow: React.FC<RegistroRowProps> = ({ registro, onValidado }) => {
+const RegistroRow: React.FC<RegistroRowProps> = ({ registro, penalideVistoria, onValidado }) => {
   const [salvando, setSalvando] = useState<null | 'ok' | 'simples' | 'grave'>(null);
   const [erro, setErro]         = useState('');
 
@@ -56,52 +60,62 @@ const RegistroRow: React.FC<RegistroRowProps> = ({ registro, onValidado }) => {
       p: 2, borderRadius: 2, border: '1px solid #E0E0E6',
       borderLeft: '5px solid #00838F',
     }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }}
-        justifyContent="space-between" gap={1.5}>
+      {/* Equipe + tempo */}
+      <Stack direction="row" alignItems="flex-start" gap={1} mb={0.25}>
+        <Typography sx={{ fontWeight: 800, color: '#1A1A2E' }}>{registro.equipeNome}</Typography>
+        {penalideVistoria && (
+          <Chip
+            icon={<WarningAmberOutlinedIcon sx={{ fontSize: '14px !important' }} />}
+            label="+5s vistoria"
+            size="small"
+            sx={{ bgcolor: '#FFF3E0', color: '#F5A623', border: '1px solid #F5A623', fontWeight: 700, fontSize: '0.7rem' }}
+          />
+        )}
+      </Stack>
+      <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#555', mb: 0.5 }}>
+        Tempo registrado:{' '}
+        <strong>{formatMs(registro.tempoMilissegundos)}</strong>
+        {penalideVistoria && (
+          <span style={{ color: '#F5A623', marginLeft: 6 }}>
+            → {formatMs((registro.tempoMilissegundos ?? 0) + PENALIDE_VISTORIA_MS)} (com +5s)
+          </span>
+        )}
+      </Typography>
+      <Typography variant="caption" sx={{ color: '#9A9AAF', display: 'block', mb: 1.5 }}>
+        Cronometrista: {registro.usuarioNome}
+      </Typography>
 
-        {/* Equipe + tempo */}
-        <Box>
-          <Typography sx={{ fontWeight: 800, color: '#1A1A2E' }}>{registro.equipeNome}</Typography>
-          <Typography variant="body2" sx={{ fontFamily: 'monospace', color: '#555', mt: 0.5 }}>
-            Tempo registrado: <strong>{formatMs(registro.tempoMilissegundos)}</strong>
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#9A9AAF' }}>
-            Cronometrista: {registro.usuarioNome}
-          </Typography>
-        </Box>
+      {/* Ações */}
+      <Stack direction="row" gap={2}>
+        <Button
+          variant="contained" fullWidth
+          startIcon={salvando === 'ok' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <CheckCircleOutlinedIcon />}
+          disabled={busy}
+          onClick={() => handleValidar(null)}
+          sx={{ bgcolor: '#22B573', '&:hover': { bgcolor: '#1a8f5a' }, fontWeight: 700, fontSize: '0.75rem', py: 1 }}
+        >
+          Validar
+        </Button>
 
-        {/* Ações */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} gap={1} flexShrink={0}>
-          <Button
-            size="small" variant="contained"
-            startIcon={salvando === 'ok' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <CheckCircleOutlinedIcon />}
-            disabled={busy}
-            onClick={() => handleValidar(null)}
-            sx={{ bgcolor: '#22B573', '&:hover': { bgcolor: '#1a8f5a' }, fontWeight: 700, fontSize: '0.75rem' }}
-          >
-            Validar
-          </Button>
+        <Button
+          variant="contained" fullWidth
+          startIcon={salvando === 'simples' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <WarningAmberOutlinedIcon />}
+          disabled={busy}
+          onClick={() => handleValidar('SIMPLES')}
+          sx={{ bgcolor: '#F5A623', '&:hover': { bgcolor: '#d4891a' }, fontWeight: 700, fontSize: '0.75rem', py: 1 }}
+        >
+          Simples +10s
+        </Button>
 
-          <Button
-            size="small" variant="contained"
-            startIcon={salvando === 'simples' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <WarningAmberOutlinedIcon />}
-            disabled={busy}
-            onClick={() => handleValidar('SIMPLES')}
-            sx={{ bgcolor: '#F5A623', '&:hover': { bgcolor: '#d4891a' }, fontWeight: 700, fontSize: '0.75rem' }}
-          >
-            Simples +20s
-          </Button>
-
-          <Button
-            size="small" variant="contained"
-            startIcon={salvando === 'grave' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <ReportOutlinedIcon />}
-            disabled={busy}
-            onClick={() => handleValidar('GRAVE')}
-            sx={{ bgcolor: '#C8102E', '&:hover': { bgcolor: '#9B0D23' }, fontWeight: 700, fontSize: '0.75rem' }}
-          >
-            Grave +2min
-          </Button>
-        </Stack>
+        <Button
+          variant="contained" fullWidth
+          startIcon={salvando === 'grave' ? <CircularProgress size={14} sx={{ color: 'white' }} /> : <ReportOutlinedIcon />}
+          disabled={busy}
+          onClick={() => handleValidar('GRAVE')}
+          sx={{ bgcolor: '#C8102E', '&:hover': { bgcolor: '#9B0D23' }, fontWeight: 700, fontSize: '0.75rem', py: 1 }}
+        >
+          Grave +2min
+        </Button>
       </Stack>
 
       {erro && <Alert severity="error" sx={{ mt: 1.5, borderRadius: 2 }}>{erro}</Alert>}
@@ -112,13 +126,14 @@ const RegistroRow: React.FC<RegistroRowProps> = ({ registro, onValidado }) => {
 // ─── PÁGINA PRINCIPAL ────────────────────────────────────────────────────────
 
 const PenalidadesPage: React.FC = () => {
-  const [eventos, setEventos]     = useState<EventoResponse[]>([]);
-  const [edicoes, setEdicoes]     = useState<EdicaoResponse[]>([]);
-  const [eventoId, setEventoId]   = useState<number | ''>('');
-  const [edicaoId, setEdicaoId]   = useState<number | ''>('');
-  const [pendentes, setPendentes] = useState<RegistroTempoResponse[]>([]);
-  const [loading, setLoading]     = useState(false);
-  const [erro, setErro]           = useState('');
+  const [eventos, setEventos]         = useState<EventoResponse[]>([]);
+  const [edicoes, setEdicoes]         = useState<EdicaoResponse[]>([]);
+  const [eventoId, setEventoId]       = useState<number | ''>('');
+  const [edicaoId, setEdicaoId]       = useState<number | ''>('');
+  const [pendentes, setPendentes]     = useState<RegistroTempoResponse[]>([]);
+  const [carrinhos, setCarrinhos]     = useState<CarrinhoResponse[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [erro, setErro]               = useState('');
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Carga inicial — auto-detecta edição EM_ANDAMENTO
@@ -152,6 +167,8 @@ const PenalidadesPage: React.FC = () => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (!edicaoId) { setPendentes([]); return; }
 
+    listarCarrinhosPorEdicao(edicaoId as number).then(setCarrinhos).catch(() => {});
+
     const buscar = (showLoader: boolean) => {
       if (showLoader) setLoading(true);
       setErro('');
@@ -169,6 +186,10 @@ const PenalidadesPage: React.FC = () => {
   const handleValidado = (id: number) => {
     setPendentes(prev => prev.filter(r => r.id !== id));
   };
+
+  const penalideMap = Object.fromEntries(
+    carrinhos.filter(c => c.penalideVistoria).map(c => [c.equipeId, true])
+  );
 
   // Agrupar por corridaId
   const porCorrida = pendentes.reduce<Record<number, RegistroTempoResponse[]>>((acc, r) => {
@@ -250,7 +271,7 @@ const PenalidadesPage: React.FC = () => {
 
               <Stack spacing={1.5}>
                 {regs.map(r => (
-                  <RegistroRow key={r.id} registro={r} onValidado={handleValidado} />
+                  <RegistroRow key={r.id} registro={r} penalideVistoria={!!penalideMap[r.equipeId]} onValidado={handleValidado} />
                 ))}
               </Stack>
 

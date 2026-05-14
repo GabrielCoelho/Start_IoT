@@ -6,7 +6,6 @@ import br.edu.fatec.startiot.domain.enums.StatusEdicao;
 import br.edu.fatec.startiot.dto.request.EdicaoRequest;
 import br.edu.fatec.startiot.dto.response.EdicaoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
-import br.edu.fatec.startiot.exception.ConflictException;
 import br.edu.fatec.startiot.exception.NotFoundException;
 import br.edu.fatec.startiot.repository.EdicaoRepository;
 import org.junit.jupiter.api.Test;
@@ -56,23 +55,24 @@ class EdicaoServiceTest {
         Edicao salva = buildEdicao(1L, StatusEdicao.PLANEJADA);
 
         when(eventoService.buscarEntidade(10L)).thenReturn(evento);
-        when(edicaoRepository.existsByEventoIdAndAno(10L, 2025)).thenReturn(false);
         when(edicaoRepository.save(any())).thenReturn(salva);
 
-        EdicaoResponse response = edicaoService.criar(new EdicaoRequest(10L, 2025, null, StatusEdicao.PLANEJADA));
+        EdicaoResponse response = edicaoService.criar(new EdicaoRequest(10L, 2025, null, null, StatusEdicao.PLANEJADA));
 
         assertThat(response.ano()).isEqualTo(2025);
         assertThat(response.status()).isEqualTo(StatusEdicao.PLANEJADA);
     }
 
     @Test
-    void deveLancarConflictSeAnoJaExisteNoEvento() {
-        when(eventoService.buscarEntidade(10L)).thenReturn(buildEvento(10L));
-        when(edicaoRepository.existsByEventoIdAndAno(10L, 2025)).thenReturn(true);
+    void deveCriarDuasEdicoesNoMesmoAno() {
+        Evento evento = buildEvento(10L);
+        Edicao salva = buildEdicao(1L, StatusEdicao.PLANEJADA);
 
-        assertThatThrownBy(() -> edicaoService.criar(new EdicaoRequest(10L, 2025, null, StatusEdicao.PLANEJADA)))
-                .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("2025");
+        when(eventoService.buscarEntidade(10L)).thenReturn(evento);
+        when(edicaoRepository.save(any())).thenReturn(salva);
+
+        edicaoService.criar(new EdicaoRequest(10L, 2025, 11, null, StatusEdicao.PLANEJADA));
+        edicaoService.criar(new EdicaoRequest(10L, 2025, 12, null, StatusEdicao.PLANEJADA));
     }
 
     @Test
