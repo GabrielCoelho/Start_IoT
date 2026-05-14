@@ -23,7 +23,9 @@ public interface RegistroTempoRepository extends JpaRepository<RegistroTempo, Lo
     List<RegistroTempo> findByEquipeIdOrderByTempoMilissegundosAsc(Long equipeId);
 
     @Query("SELECT rt FROM RegistroTempo rt " +
-           "JOIN rt.corrida c JOIN c.bateria b " +
+           "JOIN FETCH rt.corrida c " +
+           "JOIN FETCH c.bateria b " +
+           "JOIN FETCH rt.equipe e " +
            "WHERE b.edicao.id = :edicaoId " +
            "AND rt.validado = true " +
            "AND rt.tipoRegistro = 'CHEGADA' " +
