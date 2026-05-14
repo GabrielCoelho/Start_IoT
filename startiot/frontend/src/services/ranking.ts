@@ -21,6 +21,7 @@ export interface RankingItemResponse {
   equipeCurso: string;
   totalDescidas: number;
   melhorTempo: number;
+  ultimoTempo: number;
   mediaTempo: number;
   porBateria: BateriaTempoItem[];
 }

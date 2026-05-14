@@ -226,15 +226,15 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
                     <TableCell sx={{ color: 'white', fontWeight: 800, width: 52, textAlign: 'center' }}>POS</TableCell>
                     <TableCell sx={{ color: 'white', fontWeight: 800 }}>EQUIPE</TableCell>
                     <TableCell sx={{ color: 'white', fontWeight: 800, display: { xs: 'none', sm: 'table-cell' } }}>CURSO</TableCell>
+                    <TableCell sx={{ color: '#F5A623', fontWeight: 800, whiteSpace: 'nowrap', textAlign: 'center' }}>MELHOR TEMPO</TableCell>
+                    <TableCell sx={{ color: '#90CAF9', fontWeight: 800, whiteSpace: 'nowrap', textAlign: 'center' }}>ÚLTIMO TEMPO</TableCell>
 
                     {/* Colunas dinâmicas — uma por bateria com resultados */}
                     {baterias.map(b => (
-                      <TableCell key={b.bateriaId} sx={{ color: 'white', fontWeight: 800, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <TableCell key={b.bateriaId} sx={{ color: 'rgba(255,255,255,0.7)', fontWeight: 800, textAlign: 'center', whiteSpace: 'nowrap' }}>
                         {bateriaLabel(b)}
                       </TableCell>
                     ))}
-
-                    <TableCell sx={{ color: '#F5A623', fontWeight: 800, whiteSpace: 'nowrap' }}>MELHOR TEMPO</TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -262,6 +262,20 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
                         </Typography>
                       </TableCell>
 
+                      {/* Melhor tempo geral */}
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        <Typography sx={{ fontWeight: 900, fontFamily: 'monospace', color: '#AD1457', fontSize: '0.95rem' }}>
+                          {formatMs(row.melhorTempo)}
+                        </Typography>
+                      </TableCell>
+
+                      {/* Último tempo (melhor tempo da bateria mais recente) */}
+                      <TableCell sx={{ textAlign: 'center' }}>
+                        <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#1565C0', fontSize: '0.9rem' }}>
+                          {formatMs(row.ultimoTempo)}
+                        </Typography>
+                      </TableCell>
+
                       {/* Tempo por bateria — vazio se a equipe não participou */}
                       {baterias.map(b => {
                         const item = row.porBateria.find(p => p.bateriaId === b.bateriaId);
@@ -284,16 +298,6 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
                           </TableCell>
                         );
                       })}
-
-                      {/* Melhor tempo geral */}
-                      <TableCell>
-                        <Typography sx={{ fontWeight: 900, fontFamily: 'monospace', color: '#AD1457', fontSize: '0.95rem' }}>
-                          {formatMs(row.melhorTempo)}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#9A9AAF', fontSize: '0.65rem' }}>
-                          {row.totalDescidas} descida(s) total
-                        </Typography>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

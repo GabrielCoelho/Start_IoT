@@ -64,6 +64,7 @@ public class RankingService {
                         item.equipeCurso(),
                         item.totalDescidas(),
                         item.melhorTempo(),
+                        item.ultimoTempo(),
                         item.mediaTempo(),
                         item.porBateria()
                 ))
@@ -105,7 +106,16 @@ public class RankingService {
                 })
                 .toList();
 
+        // Último tempo = melhor tempo da bateria com maior número que a equipe participou
+        double ultimo = todasBaterias.stream()
+                .filter(b -> porBateriaId.containsKey(b.getId()))
+                .max(Comparator.comparingInt(Bateria::getNumero))
+                .map(b -> porBateriaId.get(b.getId()).stream()
+                        .mapToDouble(RegistroTempo::getTempoEfetivo)
+                        .min().orElse(melhor))
+                .orElse(melhor);
+
         return new RankingItemResponse(0, equipeId, equipeNome, equipeCurso,
-                tempos.size(), melhor, media, porBateria);
+                tempos.size(), melhor, ultimo, media, porBateria);
     }
 }

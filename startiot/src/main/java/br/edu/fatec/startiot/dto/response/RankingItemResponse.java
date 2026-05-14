@@ -9,6 +9,7 @@ public record RankingItemResponse(
         String equipeCurso,
         Integer totalDescidas,
         Double melhorTempo,
+        Double ultimoTempo,
         Double mediaTempo,
         List<BateriaTempoItem> porBateria
 ) {}

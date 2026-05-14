@@ -688,35 +688,20 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
             ? <Alert severity="info" sx={{ borderRadius: 2 }}>Nenhuma equipe alocada nesta corrida.</Alert>
             : (
               <Stack spacing={2}>
-                {teams.map((team, i) => {
-                  const chegou = i < stops.length;
-                  return (
-                    <Paper key={team.equipeId} elevation={0} sx={{
-                      p: 3, borderRadius: 3,
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderLeft: '6px solid',
-                      borderColor: chegou ? '#22B573' : '#E0E0E6',
-                      opacity: chegou ? 0.6 : 1,
-                      transition: '0.2s',
-                    }}>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{team.equipeNome}</Typography>
-                        {team.equipeCurso && (
-                          <Typography variant="caption" color="text.secondary">{team.equipeCurso}</Typography>
-                        )}
-                      </Box>
-                      <Chip
-                        label={chegou ? `${posLabel(i)} chegou` : 'Na pista'}
-                        size="small"
-                        sx={{
-                          bgcolor: chegou ? '#22B573' : '#E0E0E6',
-                          color: chegou ? 'white' : '#666',
-                          fontWeight: 700,
-                        }}
-                      />
-                    </Paper>
-                  );
-                })}
+                {teams.map(team => (
+                  <Paper key={team.equipeId} elevation={0} sx={{
+                    p: 3, borderRadius: 3,
+                    display: 'flex', alignItems: 'center',
+                    borderLeft: '6px solid #E0E0E6',
+                  }}>
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{team.equipeNome}</Typography>
+                      {team.equipeCurso && (
+                        <Typography variant="caption" color="text.secondary">{team.equipeCurso}</Typography>
+                      )}
+                    </Box>
+                  </Paper>
+                ))}
               </Stack>
             )
         }
