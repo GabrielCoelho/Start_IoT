@@ -7,6 +7,7 @@ import br.edu.fatec.startiot.domain.entity.Usuario;
 import br.edu.fatec.startiot.domain.enums.StatusCorrida;
 import br.edu.fatec.startiot.dto.request.PenalidadeRequest;
 import br.edu.fatec.startiot.dto.request.RegistroTempoRequest;
+import br.edu.fatec.startiot.dto.request.ValidarTempoRequest;
 import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.exception.BusinessException;
 import br.edu.fatec.startiot.exception.NotFoundException;
@@ -60,7 +61,7 @@ public class RegistroTempoService {
         registro.setTipoRegistro(request.tipoRegistro());
         registro.setObservacoes(request.observacoes());
         registro.setTimestampRegistro(LocalDateTime.now());
-        registro.setValidado(true);
+        registro.setValidado(false);
 
         return toResponse(registroTempoRepository.save(registro));
     }
@@ -82,13 +83,23 @@ public class RegistroTempoService {
     }
 
     @Transactional
-    public RegistroTempoResponse validar(Long id) {
+    public RegistroTempoResponse validar(Long id, ValidarTempoRequest request) {
         RegistroTempo registro = buscarEntidade(id);
         if (registro.getValidado()) {
             throw new BusinessException("Registro de tempo já está validado");
         }
+        if (request != null && request.tipoPenalidade() != null) {
+            registro.setTipoPenalidade(request.tipoPenalidade());
+            registro.setMotivoPenalidade(request.motivo());
+        }
         registro.setValidado(true);
         return toResponse(registroTempoRepository.save(registro));
+    }
+
+    @Transactional(readOnly = true)
+    public List<RegistroTempoResponse> listarPendentesPorEdicao(Long edicaoId) {
+        return registroTempoRepository.findChegadasPendentesPorEdicao(edicaoId)
+                .stream().map(this::toResponse).toList();
     }
 
     @Transactional

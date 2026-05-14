@@ -41,4 +41,15 @@ public interface RegistroTempoRepository extends JpaRepository<RegistroTempo, Lo
            "AND rt.tipoRegistro = 'CHEGADA' " +
            "ORDER BY b.numero, c.ordem, rt.tempoMilissegundos")
     List<RegistroTempo> findChegadasPorEdicao(@Param("edicaoId") Long edicaoId);
+
+    @Query("SELECT rt FROM RegistroTempo rt " +
+           "JOIN FETCH rt.corrida c " +
+           "JOIN FETCH c.bateria b " +
+           "JOIN FETCH rt.equipe e " +
+           "JOIN FETCH rt.usuario u " +
+           "WHERE b.edicao.id = :edicaoId " +
+           "AND rt.tipoRegistro = 'CHEGADA' " +
+           "AND rt.validado = false " +
+           "ORDER BY rt.timestampRegistro")
+    List<RegistroTempo> findChegadasPendentesPorEdicao(@Param("edicaoId") Long edicaoId);
 }

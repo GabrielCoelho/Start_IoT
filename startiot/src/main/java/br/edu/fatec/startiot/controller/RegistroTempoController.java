@@ -2,6 +2,7 @@ package br.edu.fatec.startiot.controller;
 
 import br.edu.fatec.startiot.dto.request.PenalidadeRequest;
 import br.edu.fatec.startiot.dto.request.RegistroTempoRequest;
+import br.edu.fatec.startiot.dto.request.ValidarTempoRequest;
 import br.edu.fatec.startiot.dto.response.RegistroTempoResponse;
 import br.edu.fatec.startiot.service.RegistroTempoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,10 +55,21 @@ public class RegistroTempoController {
         return ResponseEntity.badRequest().build();
     }
 
-    @Operation(summary = "Validar registro de tempo")
+    @Operation(summary = "Listar tempos pendentes de validação",
+        description = "Retorna os tempos de chegada ainda não validados de uma edição.")
+    @GetMapping("/pendentes")
+    public ResponseEntity<List<RegistroTempoResponse>> listarPendentes(
+            @Parameter(description = "ID da edição") @RequestParam Long edicaoId) {
+        return ResponseEntity.ok(registroTempoService.listarPendentesPorEdicao(edicaoId));
+    }
+
+    @Operation(summary = "Validar registro de tempo",
+        description = "Valida o tempo, marcando-o para o ranking. Opcionalmente aplica penalidade SIMPLES (+20s) ou GRAVE (+2min).")
     @PatchMapping("/{id}/validar")
-    public ResponseEntity<RegistroTempoResponse> validar(@PathVariable Long id) {
-        return ResponseEntity.ok(registroTempoService.validar(id));
+    public ResponseEntity<RegistroTempoResponse> validar(
+            @PathVariable Long id,
+            @RequestBody(required = false) ValidarTempoRequest request) {
+        return ResponseEntity.ok(registroTempoService.validar(id, request));
     }
 
     @Operation(summary = "Invalidar registro de tempo")

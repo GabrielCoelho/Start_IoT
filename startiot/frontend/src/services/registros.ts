@@ -47,11 +47,22 @@ export const registrarTempo = (data: RegistroTempoRequest, usuarioId: number) =>
     headers: { 'X-Usuario-Id': usuarioId },
   }).then(r => r.data);
 
+export interface ValidarTempoRequest {
+  tipoPenalidade?: TipoPenalidade;
+  motivo?: string;
+}
+
 export const listarRegistrosCorrida = (corridaId: number) =>
   axios.get<RegistroTempoResponse[]>(`/api/registros-tempo?corridaId=${corridaId}`).then(r => r.data);
 
 export const listarRegistrosEdicao = (edicaoId: number) =>
   axios.get<RegistroTempoResponse[]>(`/api/registros-tempo?edicaoId=${edicaoId}`).then(r => r.data);
+
+export const listarPendentes = (edicaoId: number) =>
+  axios.get<RegistroTempoResponse[]>(`/api/registros-tempo/pendentes?edicaoId=${edicaoId}`).then(r => r.data);
+
+export const validarTempo = (id: number, data?: ValidarTempoRequest) =>
+  axios.patch<RegistroTempoResponse>(`/api/registros-tempo/${id}/validar`, data ?? null).then(r => r.data);
 
 export const aplicarPenalidade = (id: number, data: PenalidadeRequest) =>
   axios.patch<RegistroTempoResponse>(`/api/registros-tempo/${id}/penalidade`, data).then(r => r.data);

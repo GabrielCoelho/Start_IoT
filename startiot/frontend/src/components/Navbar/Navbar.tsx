@@ -62,7 +62,7 @@ const Navbar: any = () => {
         <NavButton label="Cronometragem"  path="/cronometragem" icon={TimerOutlinedIcon} />
         <NavButton label="Ranking"        path="/ranking"       icon={EmojiEventsOutlinedIcon} />
         {isOrganizador && (
-          <NavButton label="Penalidades" path="/penalidades" icon={WarningAmberOutlinedIcon} />
+          <NavButton label="Validação" path="/penalidades" icon={WarningAmberOutlinedIcon} />
         )}
       </Stack>
 
