@@ -22,6 +22,7 @@ export interface RankingItemResponse {
   totalDescidas: number;
   melhorTempo: number;
   ultimoTempo: number;
+  tempoUltimaDescida: number;
   mediaTempo: number;
   porBateria: BateriaTempoItem[];
 }

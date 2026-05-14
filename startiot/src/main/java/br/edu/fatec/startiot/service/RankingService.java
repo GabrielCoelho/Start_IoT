@@ -56,7 +56,7 @@ public class RankingService {
                     var equipe = registros.get(0).getEquipe();
                     return calcularItem(equipe.getId(), equipe.getNome(), equipe.getCurso(), registros, baterias);
                 })
-                .sorted(Comparator.comparingDouble(RankingItemResponse::melhorTempo))
+                .sorted(Comparator.comparingDouble(RankingItemResponse::ultimoTempo))
                 .map(item -> new RankingItemResponse(
                         posicao.getAndIncrement(),
                         item.equipeId(),
@@ -65,6 +65,7 @@ public class RankingService {
                         item.totalDescidas(),
                         item.melhorTempo(),
                         item.ultimoTempo(),
+                        item.tempoUltimaDescida(),
                         item.mediaTempo(),
                         item.porBateria()
                 ))
@@ -106,16 +107,24 @@ public class RankingService {
                 })
                 .toList();
 
-        // Último tempo = melhor tempo da bateria com maior número que a equipe participou
-        double ultimo = todasBaterias.stream()
+        // Melhor tempo da bateria mais recente (critério de classificação — reseta por bateria)
+        List<RegistroTempo> registrosBateriaAtual = todasBaterias.stream()
                 .filter(b -> porBateriaId.containsKey(b.getId()))
                 .max(Comparator.comparingInt(Bateria::getNumero))
-                .map(b -> porBateriaId.get(b.getId()).stream()
-                        .mapToDouble(RegistroTempo::getTempoEfetivo)
-                        .min().orElse(melhor))
-                .orElse(melhor);
+                .map(b -> porBateriaId.get(b.getId()))
+                .orElse(tempos);
+
+        double melhorBateriaAtual = registrosBateriaAtual.stream()
+                .mapToDouble(RegistroTempo::getTempoEfetivo)
+                .min().orElse(melhor);
+
+        // Tempo da última descida individual (corrida com maior ordem na bateria mais recente)
+        double ultimaDescida = registrosBateriaAtual.stream()
+                .max(Comparator.comparingInt(rt -> rt.getCorrida().getOrdem()))
+                .map(RegistroTempo::getTempoEfetivo)
+                .orElse(melhorBateriaAtual);
 
         return new RankingItemResponse(0, equipeId, equipeNome, equipeCurso,
-                tempos.size(), melhor, ultimo, media, porBateria);
+                tempos.size(), melhor, melhorBateriaAtual, ultimaDescida, media, porBateria);
     }
 }

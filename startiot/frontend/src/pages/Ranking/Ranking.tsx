@@ -269,10 +269,10 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
                         </Typography>
                       </TableCell>
 
-                      {/* Último tempo (melhor tempo da bateria mais recente) */}
+                      {/* Último tempo (tempo da corrida mais recente) */}
                       <TableCell sx={{ textAlign: 'center' }}>
                         <Typography sx={{ fontWeight: 700, fontFamily: 'monospace', color: '#1565C0', fontSize: '0.9rem' }}>
-                          {formatMs(row.ultimoTempo)}
+                          {formatMs(row.tempoUltimaDescida)}
                         </Typography>
                       </TableCell>
 

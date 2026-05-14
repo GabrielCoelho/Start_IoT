@@ -10,6 +10,7 @@ public record RankingItemResponse(
         Integer totalDescidas,
         Double melhorTempo,
         Double ultimoTempo,
+        Double tempoUltimaDescida,
         Double mediaTempo,
         List<BateriaTempoItem> porBateria
 ) {}
