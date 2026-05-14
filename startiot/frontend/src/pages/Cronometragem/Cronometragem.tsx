@@ -9,6 +9,8 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
+import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined';
+import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 
 import { listarEventos, type EventoResponse } from '../../services/eventos';
 import { listarEdicoesPorEvento } from '../../services/edicoes';
@@ -24,6 +26,7 @@ import { getSession } from '../../services/auth';
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 
 type Phase = 'init' | 'select-event' | 'waiting' | 'countdown' | 'racing';
+type RacingPhase = 'timing' | 'assigning';
 
 interface ActiveContext {
   eventoNome: string;
@@ -40,10 +43,6 @@ interface WaitingInfo {
   ultimaVerificacao: string;
 }
 
-interface TeamRecord extends AlocacaoResponse {
-  tempoMs: number | null;
-}
-
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 const formatMs = (ms: number) => {
@@ -55,6 +54,8 @@ const formatMs = (ms: number) => {
 
 const agora = () =>
   new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+const posLabel = (i: number) => `${i + 1}º`;
 
 // ─── TELA: SELETOR DE EVENTO ──────────────────────────────────────────────────
 
@@ -174,34 +175,36 @@ interface PainelProps {
 const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }) => {
   const session = getSession();
 
-  const [teams, setTeams]           = useState<TeamRecord[]>([]);
+  // Equipes alocadas
+  const [teams, setTeams]               = useState<AlocacaoResponse[]>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
-  const [elapsedMs, setElapsed]     = useState(0);
-  const [running, setRunning]       = useState(false);
-  const [enviando, setEnviando]     = useState(false);
-  const [cancelando, setCancelando] = useState(false);
-  const [erro, setErro]             = useState('');
-  const [sucesso, setSucesso]       = useState(false);
 
+  // Cronômetro
+  const [elapsedMs, setElapsed] = useState(0);
+  const [running, setRunning]   = useState(false);
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const startRef  = useRef(0);
 
-  // Carrega equipes e registros já existentes
+  // Fase da corrida
+  const [racingPhase, setRacingPhase]   = useState<RacingPhase>('timing');
+  const [stops, setStops]               = useState<number[]>([]);   // tempos capturados (ms)
+  const [assignments, setAssignments]   = useState<(number | null)[]>([]);  // stopIndex → equipeId
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [draggedEquipeId, setDraggedEquipeId] = useState<number | null>(null);
+
+  // Submissão
+  const [enviando, setEnviando]   = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+  const [erro, setErro]           = useState('');
+  const [sucesso, setSucesso]     = useState(false);
+
   useEffect(() => {
     const carregar = async () => {
       setLoadingTeams(true);
       try {
-        const [alocacoes, registros] = await Promise.all([
-          listarAlocacoes(ctx.corrida.id),
-          listarRegistrosCorrida(ctx.corrida.id),
-        ]);
-        const registradosIds = new Set(registros.map(r => r.equipeId));
-        const registrosPorEquipe = new Map(registros.map(r => [r.equipeId, r.tempoMilissegundos]));
-
-        setTeams(alocacoes.map(a => ({
-          ...a,
-          tempoMs: registradosIds.has(a.equipeId) ? (registrosPorEquipe.get(a.equipeId) ?? null) : null,
-        })));
+        const alocacoes = await listarAlocacoes(ctx.corrida.id);
+        setTeams(alocacoes);
+        setAssignments(new Array(alocacoes.length).fill(null));
       } catch {
         setErro('Erro ao carregar equipes da corrida.');
       } finally {
@@ -211,23 +214,67 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
     carregar();
   }, [ctx.corrida.id]);
 
-  // Cleanup do timer ao desmontar
   useEffect(() => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
   const handleLargada = () => {
     startRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      setElapsed(Date.now() - startRef.current);
-    }, 40);
+    timerRef.current = setInterval(() => setElapsed(Date.now() - startRef.current), 40);
     setRunning(true);
   };
 
-  const registrarChegada = (equipeId: number) => {
+  const handleParar = () => {
     const tempoAtual = Date.now() - startRef.current;
-    setTeams(prev => prev.map(t => t.equipeId === equipeId ? { ...t, tempoMs: tempoAtual } : t));
+    const newStops = [...stops, tempoAtual];
+    setStops(newStops);
+
+    if (newStops.length >= teams.length) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setRacingPhase('assigning');
+    }
   };
+
+  // ── Drag-and-drop ──
+
+  const handleDragStart = (equipeId: number) => {
+    setDraggedEquipeId(equipeId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedEquipeId(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDropOnSlot = (stopIndex: number) => {
+    if (draggedEquipeId === null) return;
+    setAssignments(prev => {
+      const next = [...prev];
+      // remove equipe de qualquer slot anterior
+      const prevSlot = next.indexOf(draggedEquipeId);
+      if (prevSlot !== -1) next[prevSlot] = null;
+      next[stopIndex] = draggedEquipeId;
+      return next;
+    });
+    setDraggedEquipeId(null);
+    setDragOverIndex(null);
+  };
+
+  const handleUnassign = (stopIndex: number) => {
+    setAssignments(prev => {
+      const next = [...prev];
+      next[stopIndex] = null;
+      return next;
+    });
+  };
+
+  const assignedIds = new Set(assignments.filter((a): a is number => a !== null));
+  const unassignedTeams = teams.filter(t => !assignedIds.has(t.equipeId));
+  const allAssigned = stops.length === teams.length && assignments.every(a => a !== null);
+
+  const teamById = (id: number) => teams.find(t => t.equipeId === id);
+
+  // ── Cancelar ──
 
   const handleCancelar = async () => {
     if (!window.confirm('Cancelar esta corrida? Esta ação não pode ser desfeita.')) return;
@@ -242,30 +289,28 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
     }
   };
 
+  // ── Enviar ──
+
   const handleEnviar = async () => {
-    if (!session) return;
+    if (!session || !allAssigned) return;
     setEnviando(true);
     setErro('');
     try {
-      // Envia somente times que foram registrados localmente e ainda não existem no backend
-      const paraEnviar = teams.filter(t => t.tempoMs !== null);
-
-      // Carrega registros já existentes para evitar duplicatas
       const registrosExistentes = await listarRegistrosCorrida(ctx.corrida.id);
       const jaRegistrados = new Set(registrosExistentes.map(r => r.equipeId));
 
-      const novos = paraEnviar.filter(t => !jaRegistrados.has(t.equipeId));
+      const novos = stops
+        .map((tempoMs, i) => ({ tempoMs, equipeId: assignments[i]! }))
+        .filter(r => !jaRegistrados.has(r.equipeId));
 
-      await Promise.all(novos.map(t =>
+      await Promise.all(novos.map(r =>
         registrarTempo(
-          { corridaId: ctx.corrida.id, equipeId: t.equipeId, tempoMilissegundos: t.tempoMs!, tipoRegistro: 'CHEGADA' },
+          { corridaId: ctx.corrida.id, equipeId: r.equipeId, tempoMilissegundos: r.tempoMs, tipoRegistro: 'CHEGADA' },
           session.usuarioId,
         )
       ));
 
       await finalizarCorrida(ctx.corrida.id);
-
-      if (timerRef.current) clearInterval(timerRef.current);
       setSucesso(true);
     } catch (err: any) {
       setErro(err?.response?.data?.message ?? 'Erro ao enviar resultados.');
@@ -273,9 +318,13 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
     }
   };
 
-  const registradas = teams.filter(t => t.tempoMs !== null).length;
+  // ── Tela de sucesso ──
 
   if (sucesso) {
+    const resultados = stops
+      .map((tempoMs, i) => ({ tempoMs, equipe: teamById(assignments[i]!) }))
+      .sort((a, b) => a.tempoMs - b.tempoMs);
+
     return (
       <Box sx={{
         minHeight: '100vh', bgcolor: '#1A1A2E', color: 'white',
@@ -284,25 +333,34 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
         <CheckCircleOutlinedIcon sx={{ fontSize: 80, color: '#4ade80', mb: 3 }} />
         <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>Resultados enviados!</Typography>
         <Typography variant="body2" sx={{ opacity: 0.6, mb: 2 }}>
-          {registradas} tempo(s) registrado(s) · Corrida {ctx.corrida.ordem} finalizada
+          {stops.length} tempo(s) registrado(s) · Corrida {ctx.corrida.ordem} finalizada
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.4, mb: 4, fontSize: '0.75rem' }}>
           Bateria #{ctx.bateriaNumero} · {ctx.eventoNome} {ctx.edicaoAno}
         </Typography>
 
-        <Stack spacing={1.5} sx={{ width: '100%', maxWidth: 320 }}>
-          {teams.filter(t => t.tempoMs !== null).sort((a, b) => a.tempoMs! - b.tempoMs!).map((t, i) => (
-            <Box key={t.equipeId} sx={{ display: 'flex', alignItems: 'center', gap: 2,
-              bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, px: 2, py: 1.5 }}>
-              <Typography sx={{ fontWeight: 900, color: i === 0 ? '#F5A623' : i === 1 ? '#A8A9AD' : '#CD7F32',
-                minWidth: 28, fontSize: '0.9rem' }}>
-                {i + 1}º
+        <Stack spacing={1.5} sx={{ width: '100%', maxWidth: 360 }}>
+          {resultados.map(({ tempoMs, equipe }, i) => (
+            <Box key={i} sx={{
+              display: 'flex', alignItems: 'center', gap: 2,
+              bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 2, px: 2, py: 1.5,
+            }}>
+              <Typography sx={{
+                fontWeight: 900, minWidth: 32, fontSize: '0.9rem',
+                color: i === 0 ? '#F5A623' : i === 1 ? '#A8A9AD' : i === 2 ? '#CD7F32' : 'white',
+              }}>
+                {posLabel(i)}
               </Typography>
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{t.equipeNome}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>
+                  {equipe?.equipeNome ?? '—'}
+                </Typography>
+                {equipe?.equipeCurso && (
+                  <Typography variant="caption" sx={{ opacity: 0.5 }}>{equipe.equipeCurso}</Typography>
+                )}
               </Box>
               <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, color: '#4ade80', fontSize: '0.9rem' }}>
-                {formatMs(t.tempoMs!)}
+                {formatMs(tempoMs)}
               </Typography>
             </Box>
           ))}
@@ -316,12 +374,196 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
     );
   }
 
+  // ── Fase de atribuição ──
+
+  if (racingPhase === 'assigning') {
+    // tempos já estão em ordem crescente (stops capturados sequencialmente)
+    const sortedStops = [...stops].map((ms, i) => ({ ms, originalIndex: i })).sort((a, b) => a.ms - b.ms);
+
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: '#1A1A2E', color: 'white', p: { xs: 2, md: 4 } }}>
+        {/* Cabeçalho */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="overline" sx={{ opacity: 0.5, letterSpacing: 2 }}>
+            Bateria #{ctx.bateriaNumero} · Corrida {ctx.corrida.ordem}
+          </Typography>
+          <Typography variant="h5" sx={{ fontWeight: 900, mt: 0.5 }}>
+            Atribuir equipes aos tempos
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.6, mt: 0.5 }}>
+            Arraste os nomes das equipes para os tempos correspondentes. Todas as equipes devem ser atribuídas antes de enviar.
+          </Typography>
+        </Box>
+
+        {erro && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{erro}</Alert>}
+
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+          {/* ── Coluna esquerda: tempos (drop targets) ── */}
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="overline" sx={{ opacity: 0.5, letterSpacing: 2, mb: 2, display: 'block' }}>
+              Tempos registrados
+            </Typography>
+            <Stack spacing={1.5}>
+              {sortedStops.map(({ ms, originalIndex }, displayIndex) => {
+                const assignedEquipeId = assignments[originalIndex];
+                const assignedTeam = assignedEquipeId !== null ? teamById(assignedEquipeId) : null;
+                const isOver = dragOverIndex === originalIndex;
+
+                return (
+                  <Box
+                    key={originalIndex}
+                    onDragOver={e => { e.preventDefault(); setDragOverIndex(originalIndex); }}
+                    onDragLeave={() => setDragOverIndex(null)}
+                    onDrop={() => handleDropOnSlot(originalIndex)}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 2,
+                      p: 2, borderRadius: 2,
+                      border: '2px dashed',
+                      borderColor: isOver ? '#4ade80' : assignedTeam ? '#22B573' : 'rgba(255,255,255,0.15)',
+                      bgcolor: isOver ? 'rgba(74,222,128,0.08)' : assignedTeam ? 'rgba(34,181,115,0.08)' : 'rgba(255,255,255,0.04)',
+                      transition: '0.15s',
+                      cursor: 'default',
+                    }}
+                  >
+                    {/* Posição */}
+                    <Typography sx={{
+                      fontWeight: 900, minWidth: 32, fontSize: '1rem',
+                      color: displayIndex === 0 ? '#F5A623' : displayIndex === 1 ? '#A8A9AD' : displayIndex === 2 ? '#CD7F32' : 'rgba(255,255,255,0.5)',
+                    }}>
+                      {posLabel(displayIndex)}
+                    </Typography>
+
+                    {/* Tempo */}
+                    <Typography sx={{ fontFamily: 'monospace', fontWeight: 900, fontSize: '1.1rem', color: '#4ade80', minWidth: 100 }}>
+                      {formatMs(ms)}
+                    </Typography>
+
+                    {/* Zona de drop / equipe atribuída */}
+                    <Box sx={{ flex: 1 }}>
+                      {assignedTeam ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography sx={{ fontWeight: 700 }}>{assignedTeam.equipeNome}</Typography>
+                          {assignedTeam.equipeCurso && (
+                            <Typography variant="caption" sx={{ opacity: 0.5 }}>{assignedTeam.equipeCurso}</Typography>
+                          )}
+                        </Box>
+                      ) : (
+                        <Typography sx={{ opacity: 0.3, fontStyle: 'italic', fontSize: '0.875rem' }}>
+                          {isOver ? 'Solte aqui' : 'Arraste uma equipe aqui'}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Botão remover atribuição */}
+                    {assignedTeam && (
+                      <Button
+                        size="small"
+                        onClick={() => handleUnassign(originalIndex)}
+                        sx={{ minWidth: 0, color: 'rgba(255,255,255,0.4)', '&:hover': { color: '#C8102E' }, p: 0.5 }}
+                      >
+                        ✕
+                      </Button>
+                    )}
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Box>
+
+          {/* ── Coluna direita: equipes não atribuídas ── */}
+          <Box sx={{ width: { xs: '100%', md: 260 } }}>
+            <Typography variant="overline" sx={{ opacity: 0.5, letterSpacing: 2, mb: 2, display: 'block' }}>
+              Equipes ({unassignedTeams.length} restantes)
+            </Typography>
+
+            {unassignedTeams.length === 0 ? (
+              <Box sx={{
+                p: 3, borderRadius: 2, border: '2px dashed rgba(74,222,128,0.3)',
+                bgcolor: 'rgba(74,222,128,0.05)', textAlign: 'center',
+              }}>
+                <CheckCircleOutlinedIcon sx={{ color: '#4ade80', fontSize: 32, mb: 1 }} />
+                <Typography variant="body2" sx={{ color: '#4ade80', fontWeight: 700 }}>
+                  Todas atribuídas!
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={1.5}>
+                {unassignedTeams.map(team => (
+                  <Box
+                    key={team.equipeId}
+                    draggable
+                    onDragStart={() => handleDragStart(team.equipeId)}
+                    onDragEnd={handleDragEnd}
+                    sx={{
+                      p: 2, borderRadius: 2,
+                      bgcolor: draggedEquipeId === team.equipeId ? 'rgba(200,16,46,0.2)' : 'rgba(255,255,255,0.08)',
+                      border: '1px solid',
+                      borderColor: draggedEquipeId === team.equipeId ? '#C8102E' : 'rgba(255,255,255,0.1)',
+                      cursor: 'grab',
+                      display: 'flex', alignItems: 'center', gap: 1.5,
+                      transition: '0.15s',
+                      '&:active': { cursor: 'grabbing' },
+                    }}
+                  >
+                    <SwapHorizOutlinedIcon sx={{ opacity: 0.4, fontSize: 18 }} />
+                    <Box>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{team.equipeNome}</Typography>
+                      {team.equipeCurso && (
+                        <Typography variant="caption" sx={{ opacity: 0.5 }}>{team.equipeCurso}</Typography>
+                      )}
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </Box>
+
+        {/* ── Rodapé com ações ── */}
+        <Box sx={{ mt: 4, display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button
+            variant="contained" size="large"
+            startIcon={enviando ? undefined : <SendOutlinedIcon />}
+            disabled={!allAssigned || enviando || cancelando}
+            onClick={handleEnviar}
+            sx={{
+              flex: 1, py: 2, fontWeight: 800,
+              bgcolor: allAssigned ? '#22B573' : 'rgba(255,255,255,0.1)',
+              '&:hover': { bgcolor: '#1a9660' },
+              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' },
+            }}
+          >
+            {enviando
+              ? <CircularProgress size={22} sx={{ color: 'white' }} />
+              : allAssigned
+                ? 'ENVIAR RESULTADOS'
+                : `ENVIAR (${assignedIds.size}/${teams.length} atribuídas)`}
+          </Button>
+
+          <Button
+            variant="outlined" size="large"
+            startIcon={cancelando ? undefined : <CancelOutlinedIcon />}
+            disabled={enviando || cancelando}
+            onClick={handleCancelar}
+            sx={{ py: 1.5, fontWeight: 700, color: '#C8102E', borderColor: '#C8102E44' }}
+          >
+            {cancelando ? <CircularProgress size={18} sx={{ color: '#C8102E' }} /> : 'Cancelar corrida'}
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
+  // ── Fase de cronometragem ──
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, bgcolor: '#F4F4F6' }}>
 
       {/* ── PAINEL ESQUERDO: CRONÔMETRO ── */}
-      <Box sx={{ width: { xs: '100%', md: '360px' }, bgcolor: '#1A1A2E', color: 'white', p: 4,
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <Box sx={{
+        width: { xs: '100%', md: '360px' }, bgcolor: '#1A1A2E', color: 'white', p: 4,
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      }}>
         <Box>
           <Typography variant="overline" sx={{ opacity: 0.5, letterSpacing: 2 }}>
             Bateria #{ctx.bateriaNumero}{ctx.bateriaTipo ? ` — ${ctx.bateriaTipo}` : ''}
@@ -354,34 +596,65 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="body2" sx={{ opacity: 0.5 }}>Chegadas registradas</Typography>
               <Typography variant="body2" sx={{ fontWeight: 700, color: running ? '#4ade80' : 'white' }}>
-                {registradas} / {teams.length}
+                {stops.length} / {teams.length}
               </Typography>
             </Box>
           </Stack>
+
+          {/* Mini-lista das chegadas registradas */}
+          {stops.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Divider sx={{ bgcolor: 'rgba(255,255,255,0.1)', mb: 2 }} />
+              <Typography variant="caption" sx={{ opacity: 0.4, display: 'block', mb: 1 }}>
+                Tempos capturados
+              </Typography>
+              <Stack spacing={0.5}>
+                {stops.map((ms, i) => (
+                  <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="caption" sx={{ opacity: 0.5 }}>{posLabel(i)}</Typography>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace', color: '#4ade80', fontWeight: 700 }}>
+                      {formatMs(ms)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          )}
         </Box>
 
         <Stack spacing={2} sx={{ mt: 4 }}>
-          {!running && (
+          {!running ? (
             <Button
               variant="contained" fullWidth size="large"
               startIcon={<FlagOutlinedIcon />}
-              disabled={loadingTeams || cancelando}
+              disabled={loadingTeams || cancelando || teams.length === 0}
               onClick={handleLargada}
-              sx={{ bgcolor: '#C8102E', py: 2.5, fontWeight: 900, fontSize: '1.1rem',
+              sx={{
+                bgcolor: '#C8102E', py: 2.5, fontWeight: 900, fontSize: '1.1rem',
                 '&:hover': { bgcolor: '#9B0D23' },
-                boxShadow: '0 0 30px #C8102E66' }}>
+                boxShadow: '0 0 30px #C8102E66',
+              }}
+            >
               LARGADA
             </Button>
-          )}
-
-          {running && (
+          ) : (
             <Button
               variant="contained" fullWidth size="large"
-              startIcon={enviando ? undefined : <SendOutlinedIcon />}
-              disabled={enviando || cancelando || registradas === 0}
-              onClick={handleEnviar}
-              sx={{ bgcolor: '#22B573', py: 2, fontWeight: 800, '&:hover': { bgcolor: '#1a9660' } }}>
-              {enviando ? <CircularProgress size={22} sx={{ color: 'white' }} /> : 'ENVIAR RESULTADOS'}
+              startIcon={<StopCircleOutlinedIcon />}
+              disabled={cancelando}
+              onClick={handleParar}
+              sx={{
+                bgcolor: '#F5A623', py: 2.5, fontWeight: 900, fontSize: '1.1rem',
+                '&:hover': { bgcolor: '#d4891a' },
+                boxShadow: '0 0 30px #F5A62366',
+                animation: 'pulse 1.5s ease-in-out infinite',
+                '@keyframes pulse': {
+                  '0%, 100%': { boxShadow: '0 0 30px #F5A62366' },
+                  '50%':      { boxShadow: '0 0 50px #F5A623AA' },
+                },
+              }}
+            >
+              PARAR ({stops.length + 1}ª chegada)
             </Button>
           )}
 
@@ -390,19 +663,21 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
             startIcon={cancelando ? undefined : <CancelOutlinedIcon />}
             disabled={enviando || cancelando}
             onClick={handleCancelar}
-            sx={{ color: '#C8102E', borderColor: '#C8102E44', py: 1.5, fontWeight: 700 }}>
+            sx={{ color: '#C8102E', borderColor: '#C8102E44', py: 1.5, fontWeight: 700 }}
+          >
             {cancelando ? <CircularProgress size={18} sx={{ color: '#C8102E' }} /> : 'Cancelar corrida'}
           </Button>
         </Stack>
       </Box>
 
-      {/* ── PAINEL DIREITO: EQUIPES ── */}
+      {/* ── PAINEL DIREITO: INFO DAS EQUIPES ── */}
       <Box sx={{ flex: 1, p: { xs: 2, md: 4 }, overflowY: 'auto' }}>
         <Typography variant="h6" sx={{ mb: 0.5, fontWeight: 800, color: '#1A1A2E' }}>
           Equipes na Pista
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Clique em CHEGOU! assim que a equipe cruzar a linha de chegada.
+          Pressione <strong>PARAR</strong> a cada vez que uma equipe cruzar a linha de chegada.
+          Após a {teams.length > 0 ? `${teams.length}ª` : 'última'} chegada, você atribuirá os nomes aos tempos.
         </Typography>
 
         {erro && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{erro}</Alert>}
@@ -413,50 +688,38 @@ const PainelCorrida: React.FC<PainelProps> = ({ ctx, onCancelado, onFinalizado }
             ? <Alert severity="info" sx={{ borderRadius: 2 }}>Nenhuma equipe alocada nesta corrida.</Alert>
             : (
               <Stack spacing={2}>
-                {teams.map(team => (
-                  <Paper key={team.equipeId} elevation={0} sx={{
-                    p: 3, borderRadius: 3,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    borderLeft: '6px solid',
-                    borderColor: team.tempoMs !== null ? '#22B573' : '#C8102E',
-                    opacity: team.tempoMs !== null ? 0.7 : 1,
-                    transition: '0.2s',
-                  }}>
-                    <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{team.equipeNome}</Typography>
-                      {team.equipeCurso && (
-                        <Typography variant="caption" color="text.secondary">{team.equipeCurso}</Typography>
-                      )}
-                    </Box>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      {team.tempoMs !== null && (
-                        <Typography variant="h6" sx={{ fontWeight: 900, color: '#22B573', fontFamily: 'monospace' }}>
-                          {formatMs(team.tempoMs)}
-                        </Typography>
-                      )}
-                      <Button
-                        variant={team.tempoMs !== null ? 'outlined' : 'contained'}
-                        color={team.tempoMs !== null ? 'success' : 'error'}
-                        disabled={!running || team.tempoMs !== null || enviando}
-                        onClick={() => registrarChegada(team.equipeId)}
-                        sx={{ borderRadius: 2, px: 3, fontWeight: 800, minWidth: 110,
-                          ...(team.tempoMs === null && running && { fontSize: '1rem', py: 1.5 }) }}>
-                        {team.tempoMs !== null ? 'CHEGOU ✓' : 'CHEGOU!'}
-                      </Button>
-                    </Box>
-                  </Paper>
-                ))}
+                {teams.map((team, i) => {
+                  const chegou = i < stops.length;
+                  return (
+                    <Paper key={team.equipeId} elevation={0} sx={{
+                      p: 3, borderRadius: 3,
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      borderLeft: '6px solid',
+                      borderColor: chegou ? '#22B573' : '#E0E0E6',
+                      opacity: chegou ? 0.6 : 1,
+                      transition: '0.2s',
+                    }}>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>{team.equipeNome}</Typography>
+                        {team.equipeCurso && (
+                          <Typography variant="caption" color="text.secondary">{team.equipeCurso}</Typography>
+                        )}
+                      </Box>
+                      <Chip
+                        label={chegou ? `${posLabel(i)} chegou` : 'Na pista'}
+                        size="small"
+                        sx={{
+                          bgcolor: chegou ? '#22B573' : '#E0E0E6',
+                          color: chegou ? 'white' : '#666',
+                          fontWeight: 700,
+                        }}
+                      />
+                    </Paper>
+                  );
+                })}
               </Stack>
             )
         }
-
-        {registradas > 0 && registradas < teams.length && (
-          <Alert severity="info" sx={{ mt: 3, borderRadius: 2 }}>
-            {teams.length - registradas} equipe(s) ainda não chegaram. Você pode enviar os resultados parciais
-            a qualquer momento.
-          </Alert>
-        )}
       </Box>
     </Box>
   );
@@ -472,7 +735,6 @@ const CronometragemPage: React.FC = () => {
   const [waitingInfo, setWaitingInfo] = useState<WaitingInfo | null>(null);
   const [countdown, setCountdown]   = useState(5);
 
-  // Tenta detectar corrida EM_ANDAMENTO a partir de um eventoId
   const detectar = useCallback(async (evId: number, eventosLista: EventoResponse[]) => {
     try {
       const edicoes = await listarEdicoesPorEvento(evId);
@@ -523,7 +785,6 @@ const CronometragemPage: React.FC = () => {
     }
   }, []);
 
-  // Carga inicial: busca eventos
   useEffect(() => {
     listarEventos().then(evs => {
       setEventos(evs);
@@ -542,7 +803,6 @@ const CronometragemPage: React.FC = () => {
     });
   }, []);
 
-  // Polling a cada 5s enquanto em espera
   useEffect(() => {
     if (phase !== 'waiting' || !eventoId) return;
 
@@ -559,7 +819,6 @@ const CronometragemPage: React.FC = () => {
     return () => clearInterval(id);
   }, [phase, eventoId, detectar, eventos]);
 
-  // Contagem regressiva
   useEffect(() => {
     if (phase !== 'countdown') return;
     setCountdown(5);
