@@ -2,7 +2,6 @@ package br.edu.fatec.startiot.service;
 
 import br.edu.fatec.startiot.domain.entity.Bateria;
 import br.edu.fatec.startiot.domain.entity.Edicao;
-import br.edu.fatec.startiot.domain.entity.Equipe;
 import br.edu.fatec.startiot.domain.entity.RegistroTempo;
 import br.edu.fatec.startiot.dto.response.BateriaInfo;
 import br.edu.fatec.startiot.dto.response.BateriaTempoItem;
@@ -13,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -30,13 +27,15 @@ public class RankingService {
     public RankingResponse calcularRanking(Long edicaoId) {
         Edicao edicao = edicaoService.buscarEntidade(edicaoId);
 
-        // Todos os tempos de chegada validados de corridas FINALIZADAS nesta edição
         List<RegistroTempo> tempos = registroTempoRepository.findTemposValidadosPorEdicao(edicaoId);
 
-        // Baterias únicas que têm pelo menos um tempo registrado, ordenadas por número
-        List<Bateria> baterias = tempos.stream()
-                .map(rt -> rt.getCorrida().getBateria())
-                .distinct()
+        // Deduplicar baterias por ID (evita distinct() sobre entidades sem equals/hashCode)
+        LinkedHashMap<Long, Bateria> bateriaMap = new LinkedHashMap<>();
+        for (RegistroTempo rt : tempos) {
+            Bateria b = rt.getCorrida().getBateria();
+            bateriaMap.putIfAbsent(b.getId(), b);
+        }
+        List<Bateria> baterias = bateriaMap.values().stream()
                 .sorted(Comparator.comparingInt(Bateria::getNumero))
                 .toList();
 
@@ -44,14 +43,19 @@ public class RankingService {
                 .map(b -> new BateriaInfo(b.getId(), b.getNumero(), b.getTipo()))
                 .toList();
 
-        // Agrupar registros por equipe
-        Map<Equipe, List<RegistroTempo>> porEquipe = tempos.stream()
-                .collect(Collectors.groupingBy(RegistroTempo::getEquipe));
+        // Agrupar por equipeId (Long) para evitar mesmo problema com Equipe entity
+        Map<Long, List<RegistroTempo>> porEquipeId = tempos.stream()
+                .collect(Collectors.groupingBy(rt -> rt.getEquipe().getId()));
 
         AtomicInteger posicao = new AtomicInteger(1);
 
-        List<RankingItemResponse> classificacao = porEquipe.entrySet().stream()
-                .map(entry -> calcularItem(entry.getKey(), entry.getValue(), baterias))
+        List<RankingItemResponse> classificacao = porEquipeId.entrySet().stream()
+                .map(entry -> {
+                    List<RegistroTempo> registros = entry.getValue();
+                    // Pega os dados da equipe do primeiro registro
+                    var equipe = registros.get(0).getEquipe();
+                    return calcularItem(equipe.getId(), equipe.getNome(), equipe.getCurso(), registros, baterias);
+                })
                 .sorted(Comparator.comparingDouble(RankingItemResponse::melhorTempo))
                 .map(item -> new RankingItemResponse(
                         posicao.getAndIncrement(),
@@ -74,49 +78,34 @@ public class RankingService {
         );
     }
 
-    private RankingItemResponse calcularItem(Equipe equipe, List<RegistroTempo> tempos, List<Bateria> todasBaterias) {
+    private RankingItemResponse calcularItem(
+            Long equipeId, String equipeNome, String equipeCurso,
+            List<RegistroTempo> tempos, List<Bateria> todasBaterias) {
+
         double melhor = tempos.stream()
                 .mapToDouble(RegistroTempo::getTempoMilissegundos)
-                .min()
-                .orElse(0.0);
+                .min().orElse(0.0);
 
         double media = tempos.stream()
                 .mapToDouble(RegistroTempo::getTempoMilissegundos)
-                .average()
-                .orElse(0.0);
+                .average().orElse(0.0);
 
-        // Agrupar os tempos desta equipe por bateria (usando bateriaId como chave)
+        // Agrupar por bateriaId
         Map<Long, List<RegistroTempo>> porBateriaId = tempos.stream()
                 .collect(Collectors.groupingBy(rt -> rt.getCorrida().getBateria().getId()));
 
-        // Gerar um BateriaTempoItem para cada bateria em que a equipe participou
         List<BateriaTempoItem> porBateria = todasBaterias.stream()
                 .filter(b -> porBateriaId.containsKey(b.getId()))
                 .map(b -> {
-                    List<RegistroTempo> temposBateria = porBateriaId.get(b.getId());
-                    double melhorBateria = temposBateria.stream()
+                    List<RegistroTempo> tb = porBateriaId.get(b.getId());
+                    double melhorBateria = tb.stream()
                             .mapToDouble(RegistroTempo::getTempoMilissegundos)
-                            .min()
-                            .orElse(0.0);
-                    return new BateriaTempoItem(
-                            b.getId(),
-                            b.getNumero(),
-                            b.getTipo(),
-                            melhorBateria,
-                            temposBateria.size()
-                    );
+                            .min().orElse(0.0);
+                    return new BateriaTempoItem(b.getId(), b.getNumero(), b.getTipo(), melhorBateria, tb.size());
                 })
                 .toList();
 
-        return new RankingItemResponse(
-                0,
-                equipe.getId(),
-                equipe.getNome(),
-                equipe.getCurso(),
-                tempos.size(),
-                melhor,
-                media,
-                porBateria
-        );
+        return new RankingItemResponse(0, equipeId, equipeNome, equipeCurso,
+                tempos.size(), melhor, media, porBateria);
     }
 }
