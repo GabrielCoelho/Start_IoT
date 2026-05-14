@@ -6,5 +6,6 @@ public record RankingResponse(
         Long edicaoId,
         Integer anoEdicao,
         String nomeEvento,
+        List<BateriaInfo> baterias,
         List<RankingItemResponse> classificacao
 ) {}

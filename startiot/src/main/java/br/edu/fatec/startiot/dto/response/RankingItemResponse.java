@@ -1,5 +1,7 @@
 package br.edu.fatec.startiot.dto.response;
 
+import java.util.List;
+
 public record RankingItemResponse(
         Integer posicao,
         Long equipeId,
@@ -7,5 +9,6 @@ public record RankingItemResponse(
         String equipeCurso,
         Integer totalDescidas,
         Double melhorTempo,
-        Double mediaTempo
+        Double mediaTempo,
+        List<BateriaTempoItem> porBateria
 ) {}

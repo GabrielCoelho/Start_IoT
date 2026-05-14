@@ -11,6 +11,7 @@ import PlayArrowOutlinedIcon from '@mui/icons-material/PlayArrowOutlined';
 import StopOutlinedIcon from '@mui/icons-material/StopOutlined';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 
 import { listarEventos, type EventoResponse } from '../../services/eventos';
 import { listarEdicoesPorEvento, type EdicaoResponse } from '../../services/edicoes';
@@ -198,11 +199,25 @@ const AlocacaoManager: React.FC<AlocacaoManagerProps> = ({ corrida, equipes }) =
 interface CorridaRowProps {
   corrida: CorridaResponse;
   equipes: EquipeResponse[];
+  bateriaId: number;
+  nextOrdem: number;
   onChange: (updated: CorridaResponse) => void;
+  onReplicada: (nova: CorridaResponse) => void;
 }
 
-const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, onChange }) => {
+const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, bateriaId, nextOrdem, onChange, onReplicada }) => {
   const [acting, setActing] = useState(false);
+  const [replicando, setReplicando] = useState(false);
+
+  const handleReplicar = async () => {
+    setReplicando(true);
+    try {
+      const alocacoes = await listarAlocacoes(corrida.id);
+      const nova = await criarCorrida(bateriaId, nextOrdem);
+      await Promise.all(alocacoes.map(a => alocarEquipe(nova.id, a.equipeId)));
+      onReplicada(nova);
+    } catch {} finally { setReplicando(false); }
+  };
 
   const act = async (fn: () => Promise<CorridaResponse>) => {
     setActing(true);
@@ -262,6 +277,14 @@ const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, onChange }) =
               </span>
             </Tooltip>
           )}
+          <Tooltip title="Replicar corrida (mesmas equipes)">
+            <span>
+              <IconButton size="small" disabled={replicando || acting} onClick={handleReplicar}
+                sx={{ color: '#7B1FA2' }}>
+                {replicando ? <CircularProgress size={16} /> : <ContentCopyOutlinedIcon fontSize="small" />}
+              </IconButton>
+            </span>
+          </Tooltip>
         </Stack>
       </Stack>
 
@@ -269,9 +292,6 @@ const CorridaRow: React.FC<CorridaRowProps> = ({ corrida, equipes, onChange }) =
     </Paper>
   );
 };
-
-// @TODO: Replicar corrida — permitir copiar uma corrida existente (mesmas equipes alocadas)
-//        para outra bateria ou como nova corrida na mesma bateria. Detalhamento pendente.
 
 // ─── CARD DE BATERIA ─────────────────────────────────────────────────────────
 
@@ -296,7 +316,7 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
 
   useEffect(() => {
     reloadCorridas();
-    const id = setInterval(reloadCorridas, 20_000);
+    const id = setInterval(reloadCorridas, 5_000);
     return () => clearInterval(id);
   }, [reloadCorridas]);
 
@@ -316,6 +336,9 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
 
   const updateCorrida = (updated: CorridaResponse) =>
     setCorridas(prev => prev.map(c => c.id === updated.id ? updated : c));
+
+  const addCorrida = (nova: CorridaResponse) =>
+    setCorridas(prev => [...prev, nova].sort((a, b) => a.ordem - b.ordem));
 
   const chip = BATERIA_CHIP[bateria.status];
   const podeIniciar   = bateria.status === 'AGUARDANDO';
@@ -385,7 +408,15 @@ const BateriaCard: React.FC<BateriaCardProps> = ({ bateria, equipes, onChange })
               {corridas.length === 0
                 ? <Typography variant="body2" color="text.secondary">Nenhuma corrida cadastrada.</Typography>
                 : corridas.map(c => (
-                    <CorridaRow key={c.id} corrida={c} equipes={equipes} onChange={updateCorrida} />
+                    <CorridaRow
+                      key={c.id}
+                      corrida={c}
+                      equipes={equipes}
+                      bateriaId={bateria.id}
+                      nextOrdem={corridas.length + 1}
+                      onChange={updateCorrida}
+                      onReplicada={addCorrida}
+                    />
                   ))
               }
 
@@ -509,7 +540,7 @@ const BateriasPage: React.FC = () => {
     };
 
     carregarTudo(true);
-    const id = setInterval(() => carregarTudo(false), 20_000);
+    const id = setInterval(() => carregarTudo(false), 5_000);
     return () => clearInterval(id);
   }, [edicaoId]);
 

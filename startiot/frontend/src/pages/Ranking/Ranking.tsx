@@ -9,7 +9,7 @@ import LeaderboardOutlinedIcon from '@mui/icons-material/LeaderboardOutlined';
 
 import { listarEventos, type EventoResponse } from '../../services/eventos';
 import { listarEdicoesPorEvento, type EdicaoResponse } from '../../services/edicoes';
-import { calcularRanking, type RankingResponse } from '../../services/ranking';
+import { calcularRanking, type RankingResponse, type BateriaInfo } from '../../services/ranking';
 
 const POLL_INTERVAL_MS = 20_000;
 
@@ -29,10 +29,13 @@ const posColor = (pos: number) => {
   return '#9A9AAF';
 };
 
+const bateriaLabel = (b: BateriaInfo) =>
+  b.tipo ? `Bat. ${b.numero} — ${b.tipo}` : `Bat. ${b.numero}`;
+
 const agora = () =>
   new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-// ─── SELETOR MANUAL (fallback quando não há edição EM_ANDAMENTO) ──────────────
+// ─── SELETOR MANUAL ───────────────────────────────────────────────────────────
 
 interface SeletorManualProps {
   eventos: EventoResponse[];
@@ -51,8 +54,8 @@ const SeletorManual: React.FC<SeletorManualProps> = ({ eventos, onConfirmar }) =
 
   const handleOk = () => {
     if (!edicaoId) return;
-    const ev  = eventos.find(e => e.id === eventoId);
-    const ed  = edicoes.find(e => e.id === edicaoId);
+    const ev = eventos.find(e => e.id === eventoId);
+    const ed = edicoes.find(e => e.id === edicaoId);
     onConfirmar(edicaoId as number, `${ev?.nome ?? ''} · ${ed?.ano ?? ''}`);
   };
 
@@ -77,9 +80,7 @@ const SeletorManual: React.FC<SeletorManualProps> = ({ eventos, onConfirmar }) =
             {edicoes.map(ed => <MenuItem key={ed.id} value={ed.id}>{ed.ano} — {ed.status}</MenuItem>)}
           </TextField>
           <Box
-            component="button"
-            onClick={handleOk}
-            disabled={!edicaoId}
+            component="button" onClick={handleOk} disabled={!edicaoId}
             sx={{
               py: 1.5, px: 2, borderRadius: 2, border: 'none', cursor: 'pointer',
               bgcolor: !edicaoId ? '#E0E0E6' : '#AD1457', color: 'white',
@@ -103,9 +104,9 @@ interface RankingTableProps {
 }
 
 const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }) => {
-  const [ranking, setRanking]   = useState<RankingResponse | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [erro, setErro]         = useState('');
+  const [ranking, setRanking]       = useState<RankingResponse | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [erro, setErro]             = useState('');
   const [lastUpdate, setLastUpdate] = useState('');
   const [countdown, setCountdown]   = useState(POLL_INTERVAL_MS / 1000);
 
@@ -133,16 +134,10 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
     }, 1000);
   }, []);
 
-  // Carga inicial + polling automático a cada 20s
   useEffect(() => {
     carregar();
     resetCountdown();
-
-    pollRef.current = setInterval(() => {
-      carregar();
-      resetCountdown();
-    }, POLL_INTERVAL_MS);
-
+    pollRef.current = setInterval(() => { carregar(); resetCountdown(); }, POLL_INTERVAL_MS);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
       if (countdownRef.current) clearInterval(countdownRef.current);
@@ -154,11 +149,10 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
     carregar();
     resetCountdown();
     if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = setInterval(() => {
-      carregar();
-      resetCountdown();
-    }, POLL_INTERVAL_MS);
+    pollRef.current = setInterval(() => { carregar(); resetCountdown(); }, POLL_INTERVAL_MS);
   };
+
+  const baterias = ranking?.baterias ?? [];
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F4F4F6', p: { xs: 1, md: 3 } }}>
@@ -175,6 +169,10 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
             {ranking && (
               <Chip label={`${ranking.anoEdicao}`} size="small"
                 sx={{ bgcolor: '#AD1457', color: 'white', fontWeight: 800, fontSize: '0.6rem' }} />
+            )}
+            {baterias.length > 0 && (
+              <Chip label={`${baterias.length} bateria(s) com resultados`} size="small"
+                sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontSize: '0.6rem' }} />
             )}
             <Typography variant="caption" sx={{ opacity: 0.6 }}>{label}</Typography>
           </Box>
@@ -196,15 +194,12 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
             {loading ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <RefreshIcon />}
           </IconButton>
 
-          <Box
-            component="button"
-            onClick={onTrocar}
-            sx={{
-              px: 2, py: 0.75, borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.2)',
-              bgcolor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
-              fontSize: '0.8rem', fontWeight: 600, transition: '0.2s',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-            }}>
+          <Box component="button" onClick={onTrocar} sx={{
+            px: 2, py: 0.75, borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.2)',
+            bgcolor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
+            fontSize: '0.8rem', fontWeight: 600, transition: '0.2s',
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+          }}>
             Trocar
           </Box>
         </Box>
@@ -220,25 +215,33 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
         <>
           {ranking.classificacao.length === 0 ? (
             <Alert severity="info" sx={{ borderRadius: 2 }}>
-              Nenhum resultado registrado ainda para esta edição. Os tempos aparecem aqui assim que forem enviados e validados.
+              Nenhum resultado registrado ainda. Os tempos aparecem aqui assim que corridas forem finalizadas.
             </Alert>
           ) : (
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, border: '1px solid #E0E0E6' }}>
+            <TableContainer component={Paper} elevation={0}
+              sx={{ borderRadius: 2, border: '1px solid #E0E0E6', overflowX: 'auto' }}>
               <Table sx={{ minWidth: 500 }} size="small">
                 <TableHead>
                   <TableRow sx={{ bgcolor: '#16213E' }}>
-                    <TableCell sx={{ color: 'white', fontWeight: 800, width: 60, textAlign: 'center' }}>POS</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 800, width: 52, textAlign: 'center' }}>POS</TableCell>
                     <TableCell sx={{ color: 'white', fontWeight: 800 }}>EQUIPE</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 800 }}>CURSO</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 800, textAlign: 'center' }}>DESCIDAS</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 800 }}>MELHOR TEMPO</TableCell>
-                    <TableCell sx={{ color: 'white', fontWeight: 800 }}>MÉDIA</TableCell>
+                    <TableCell sx={{ color: 'white', fontWeight: 800, display: { xs: 'none', sm: 'table-cell' } }}>CURSO</TableCell>
+
+                    {/* Colunas dinâmicas — uma por bateria com resultados */}
+                    {baterias.map(b => (
+                      <TableCell key={b.bateriaId} sx={{ color: 'white', fontWeight: 800, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        {bateriaLabel(b)}
+                      </TableCell>
+                    ))}
+
+                    <TableCell sx={{ color: '#F5A623', fontWeight: 800, whiteSpace: 'nowrap' }}>MELHOR TEMPO</TableCell>
                   </TableRow>
                 </TableHead>
+
                 <TableBody>
                   {ranking.classificacao.map(row => (
                     <TableRow key={row.equipeId} sx={{
-                      '&:nth-of-type(odd)': { bgcolor: '#FFFFFF' },
+                      '&:nth-of-type(odd)':  { bgcolor: '#FFFFFF' },
                       '&:nth-of-type(even)': { bgcolor: '#F9F9FB' },
                       '&:hover': { bgcolor: '#FCE4EC' },
                       transition: '0.2s',
@@ -248,23 +251,47 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
                           {row.posicao}º
                         </Typography>
                       </TableCell>
+
                       <TableCell>
                         <Typography sx={{ fontWeight: 800, color: '#1A1A2E' }}>{row.equipeNome}</Typography>
                       </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ color: '#9A9AAF', fontSize: '0.75rem' }}>{row.equipeCurso}</Typography>
-                      </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
-                        <Chip label={row.totalDescidas} size="small" variant="outlined" sx={{ fontWeight: 700 }} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontWeight: 900, fontFamily: 'monospace', color: '#1A1A2E' }}>
-                          {formatMs(row.melhorTempo)}
+
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                        <Typography variant="body2" sx={{ color: '#9A9AAF', fontSize: '0.75rem' }}>
+                          {row.equipeCurso}
                         </Typography>
                       </TableCell>
+
+                      {/* Tempo por bateria — vazio se a equipe não participou */}
+                      {baterias.map(b => {
+                        const item = row.porBateria.find(p => p.bateriaId === b.bateriaId);
+                        return (
+                          <TableCell key={b.bateriaId} sx={{ textAlign: 'center' }}>
+                            {item ? (
+                              <Box>
+                                <Typography sx={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.85rem', color: '#1A1A2E' }}>
+                                  {formatMs(item.melhorTempo)}
+                                </Typography>
+                                {item.totalDescidas > 1 && (
+                                  <Typography variant="caption" sx={{ color: '#9A9AAF', fontSize: '0.65rem' }}>
+                                    {item.totalDescidas} descidas
+                                  </Typography>
+                                )}
+                              </Box>
+                            ) : (
+                              <Typography sx={{ color: '#D0D0D8', fontSize: '0.8rem' }}>—</Typography>
+                            )}
+                          </TableCell>
+                        );
+                      })}
+
+                      {/* Melhor tempo geral */}
                       <TableCell>
-                        <Typography sx={{ fontSize: '0.8rem', color: '#9A9AAF', fontFamily: 'monospace' }}>
-                          {formatMs(row.mediaTempo)}
+                        <Typography sx={{ fontWeight: 900, fontFamily: 'monospace', color: '#AD1457', fontSize: '0.95rem' }}>
+                          {formatMs(row.melhorTempo)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#9A9AAF', fontSize: '0.65rem' }}>
+                          {row.totalDescidas} descida(s) total
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -276,7 +303,7 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
 
           <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', px: 1 }}>
             <Typography variant="caption" sx={{ color: '#9A9AAF' }}>
-              START IoT · Classificação por melhor tempo entre todas as corridas validadas
+              START IoT · Classificação pelo menor tempo entre todas as descidas finalizadas
             </Typography>
             <Typography variant="caption" sx={{ fontWeight: 700, color: '#1A1A2E' }}>
               FATEC MOGI MIRIM
@@ -291,7 +318,6 @@ const RankingTable: React.FC<RankingTableProps> = ({ edicaoId, label, onTrocar }
 // ─── PÁGINA PRINCIPAL ────────────────────────────────────────────────────────
 
 type Phase = 'init' | 'select-manual' | 'showing';
-
 interface Contexto { edicaoId: number; label: string; }
 
 const RankingPage: React.FC = () => {
@@ -305,7 +331,6 @@ const RankingPage: React.FC = () => {
         const evs = await listarEventos();
         setEventos(evs);
 
-        // Tenta encontrar edição EM_ANDAMENTO em qualquer evento
         for (const ev of evs) {
           const edicoes = await listarEdicoesPorEvento(ev.id);
           const ativa   = edicoes.find(e => e.status === 'EM_ANDAMENTO');
@@ -316,7 +341,6 @@ const RankingPage: React.FC = () => {
           }
         }
 
-        // Nenhuma edição ativa — vai para seletor manual
         setPhase('select-manual');
       } catch {
         setPhase('select-manual');
@@ -337,10 +361,7 @@ const RankingPage: React.FC = () => {
     return (
       <SeletorManual
         eventos={eventos}
-        onConfirmar={(edicaoId, label) => {
-          setContexto({ edicaoId, label });
-          setPhase('showing');
-        }}
+        onConfirmar={(edicaoId, label) => { setContexto({ edicaoId, label }); setPhase('showing'); }}
       />
     );
   }

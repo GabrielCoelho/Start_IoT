@@ -1,5 +1,19 @@
 import axios from 'axios';
 
+export interface BateriaInfo {
+  bateriaId: number;
+  numero: number;
+  tipo?: string;
+}
+
+export interface BateriaTempoItem {
+  bateriaId: number;
+  bateriaNumero: number;
+  bateriaTipo?: string;
+  melhorTempo: number;
+  totalDescidas: number;
+}
+
 export interface RankingItemResponse {
   posicao: number;
   equipeId: number;
@@ -8,12 +22,14 @@ export interface RankingItemResponse {
   totalDescidas: number;
   melhorTempo: number;
   mediaTempo: number;
+  porBateria: BateriaTempoItem[];
 }
 
 export interface RankingResponse {
   edicaoId: number;
   anoEdicao: number;
   nomeEvento: string;
+  baterias: BateriaInfo[];
   classificacao: RankingItemResponse[];
 }
 
