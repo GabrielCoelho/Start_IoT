@@ -1,18 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions,
-  DialogContent, DialogTitle, MenuItem, Paper, Stack,
+  DialogContent, DialogTitle, Divider, MenuItem, Paper, Stack,
   TextField, Typography,
 } from '@mui/material';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import { listarEventos, type EventoResponse } from '../../services/eventos';
 import {
   listarEdicoesPorEvento, criarEdicao, atualizarStatusEdicao,
   type EdicaoResponse, type StatusEdicao,
 } from '../../services/edicoes';
+import { calcularRanking } from '../../services/ranking';
 
 const STATUS_CHIP: Record<StatusEdicao, { label: string; color: 'default' | 'info' | 'warning' | 'success' | 'error' }> = {
   PLANEJADA:    { label: 'Planejada',    color: 'info'    },
@@ -27,7 +29,6 @@ const TRANSICOES: Record<StatusEdicao, { label: string; status: StatusEdicao; co
     { label: 'Cancelar',  status: 'CANCELADA',    color: '#C8102E' },
   ],
   EM_ANDAMENTO: [
-    { label: 'Finalizar', status: 'FINALIZADA',   color: '#1565C0' },
     { label: 'Cancelar',  status: 'CANCELADA',    color: '#C8102E' },
   ],
   FINALIZADA:   [],
@@ -45,6 +46,54 @@ const formatDate = (iso?: string) => {
   return `${d}/${m}/${y}`;
 };
 
+const formatMs = (ms: number) => {
+  const min  = Math.floor(ms / 60000);
+  const sec  = Math.floor((ms % 60000) / 1000);
+  const cent = Math.floor((ms % 1000) / 10);
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(cent).padStart(2, '0')}`;
+};
+
+const escapeCsv = (v: string | number) => {
+  const s = String(v);
+  return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const gerarCsv = async (edicao: EdicaoResponse): Promise<void> => {
+  const ranking = await calcularRanking(edicao.id);
+  const baterias = ranking.baterias;
+
+  const cabecalho = [
+    'Pos', 'Equipe', 'Curso',
+    'Melhor Tempo', 'Último Tempo', 'Total Descidas',
+    ...baterias.map(b => b.tipo ? `Bat.${b.numero} - ${b.tipo}` : `Bat.${b.numero}`),
+  ].map(escapeCsv).join(',');
+
+  const linhas = ranking.classificacao.map(item => {
+    const temposPorBateria = baterias.map(b => {
+      const encontrado = item.porBateria.find(pb => pb.bateriaId === b.bateriaId);
+      return encontrado ? escapeCsv(formatMs(encontrado.melhorTempo)) : '-';
+    });
+    return [
+      item.posicao,
+      escapeCsv(item.equipeNome),
+      escapeCsv(item.equipeCurso),
+      escapeCsv(formatMs(item.ultimoTempo)),
+      escapeCsv(formatMs(item.tempoUltimaDescida)),
+      item.totalDescidas,
+      ...temposPorBateria,
+    ].join(',');
+  });
+
+  const csv = [cabecalho, ...linhas].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `ranking_${ranking.nomeEvento.replace(/\s+/g, '_')}_${edicao.ano}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 const EdicoesPage: React.FC = () => {
   const [eventos, setEventos] = useState<EventoResponse[]>([]);
   const [eventoId, setEventoId] = useState<number | ''>('');
@@ -52,6 +101,8 @@ const EdicoesPage: React.FC = () => {
   const [loadingInicial, setLoadingInicial] = useState(true);
   const [loadingEdicoes, setLoadingEdicoes] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
+  const [confirmandoFinalizar, setConfirmandoFinalizar] = useState<EdicaoResponse | null>(null);
+  const [exportando, setExportando] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [atualizando, setAtualizando] = useState<number | null>(null);
@@ -109,6 +160,17 @@ const EdicoesPage: React.FC = () => {
     } catch {} finally {
       setAtualizando(null);
     }
+  };
+
+  const handleConfirmarFinalizar = async (exportarCsv: boolean) => {
+    if (!confirmandoFinalizar) return;
+    const ed = confirmandoFinalizar;
+    setConfirmandoFinalizar(null);
+    if (exportarCsv) {
+      setExportando(true);
+      try { await gerarCsv(ed); } catch {} finally { setExportando(false); }
+    }
+    await handleMudarStatus(ed.id, 'FINALIZADA');
   };
 
   const abrirDialog = () => {
@@ -192,8 +254,17 @@ const EdicoesPage: React.FC = () => {
                     <Chip label={chip.label} size="small" color={chip.color} />
                   </Box>
 
-                  {transicoes.length > 0 && (
+                  {(transicoes.length > 0 || ed.status === 'EM_ANDAMENTO') && (
                     <Stack direction="row" spacing={1}>
+                      {ed.status === 'EM_ANDAMENTO' && (
+                        <Button size="small" variant="outlined"
+                          disabled={isUpdating || exportando}
+                          onClick={() => setConfirmandoFinalizar(ed)}
+                          sx={{ fontSize: 11, fontWeight: 700, borderColor: '#1565C0', color: '#1565C0',
+                            '&:hover': { bgcolor: '#1565C018', borderColor: '#1565C0' } }}>
+                          Finalizar
+                        </Button>
+                      )}
                       {transicoes.map(t => (
                         <Button key={t.status} size="small" variant="outlined"
                           disabled={isUpdating}
@@ -238,6 +309,37 @@ const EdicoesPage: React.FC = () => {
           })}
         </Stack>
       )}
+
+      {/* Dialog de confirmação de finalização */}
+      <Dialog open={!!confirmandoFinalizar} onClose={() => setConfirmandoFinalizar(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>
+          Finalizar edição {confirmandoFinalizar?.ano}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Deseja exportar o ranking em CSV antes de finalizar?
+          </Typography>
+          <Typography variant="caption" color="text.disabled">
+            O CSV inclui posição, equipe, curso, tempos e resultados por bateria.
+          </Typography>
+        </DialogContent>
+        <Divider />
+        <DialogActions sx={{ px: 2, py: 1.5, gap: 1, flexDirection: { xs: 'column', sm: 'row' } }}>
+          <Button onClick={() => setConfirmandoFinalizar(null)} sx={{ minWidth: 90 }}>
+            Cancelar
+          </Button>
+          <Button variant="outlined" startIcon={<DownloadOutlinedIcon />}
+            onClick={() => handleConfirmarFinalizar(true)}
+            sx={{ minWidth: 180, borderColor: '#1565C0', color: '#1565C0',
+              '&:hover': { bgcolor: '#1565C018', borderColor: '#1565C0' }, fontWeight: 700 }}>
+            Exportar CSV e Finalizar
+          </Button>
+          <Button variant="contained" onClick={() => handleConfirmarFinalizar(false)}
+            sx={{ minWidth: 90, bgcolor: '#1565C0', '&:hover': { bgcolor: '#0d47a1' }, fontWeight: 700 }}>
+            Só Finalizar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={dialogAberto} onClose={() => !saving && setDialogAberto(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Nova edição</DialogTitle>
