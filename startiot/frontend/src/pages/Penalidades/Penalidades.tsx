@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 
