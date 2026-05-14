@@ -62,7 +62,7 @@ export const listarPendentes = (edicaoId: number) =>
   axios.get<RegistroTempoResponse[]>(`/api/registros-tempo/pendentes?edicaoId=${edicaoId}`).then(r => r.data);
 
 export const validarTempo = (id: number, data?: ValidarTempoRequest) =>
-  axios.patch<RegistroTempoResponse>(`/api/registros-tempo/${id}/validar`, data ?? null).then(r => r.data);
+  axios.patch<RegistroTempoResponse>(`/api/registros-tempo/${id}/validar`, data ?? {}).then(r => r.data);
 
 export const aplicarPenalidade = (id: number, data: PenalidadeRequest) =>
   axios.patch<RegistroTempoResponse>(`/api/registros-tempo/${id}/penalidade`, data).then(r => r.data);
