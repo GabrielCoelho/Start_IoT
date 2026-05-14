@@ -138,7 +138,7 @@ class BateriaServiceTest {
         when(bateriaRepository.findById(1L)).thenReturn(Optional.of(bateria));
         when(bateriaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        BateriaResponse response = bateriaService.finalizar(1L);
+        BateriaResponse response = bateriaService.finalizar(1L, null);
 
         assertThat(response.status()).isEqualTo(StatusBateria.FINALIZADA);
     }
@@ -148,7 +148,7 @@ class BateriaServiceTest {
         Bateria bateria = buildBateria(1L, StatusBateria.AGUARDANDO);
         when(bateriaRepository.findById(1L)).thenReturn(Optional.of(bateria));
 
-        assertThatThrownBy(() -> bateriaService.finalizar(1L))
+        assertThatThrownBy(() -> bateriaService.finalizar(1L, null))
                 .isInstanceOf(BusinessException.class);
     }
 
