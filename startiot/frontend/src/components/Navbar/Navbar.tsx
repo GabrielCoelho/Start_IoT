@@ -5,12 +5,17 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import CelebrationOutlinedIcon from '@mui/icons-material/CelebrationOutlined';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
+import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined';
 import { logout, getSession } from '../../services/auth';
 
 const Navbar: any = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const session = getSession();
+  const isAdmin = session?.perfil === 'ADMIN';
   const isOrganizador = session?.perfil === 'ADMIN' || session?.perfil === 'ORGANIZADOR';
 
   const handleLogout = () => {
@@ -61,8 +66,20 @@ const Navbar: any = () => {
         <NavButton label="Início"         path="/home"          icon={HomeOutlinedIcon} />
         <NavButton label="Cronometragem"  path="/cronometragem" icon={TimerOutlinedIcon} />
         <NavButton label="Ranking"        path="/ranking"       icon={EmojiEventsOutlinedIcon} />
+        {isAdmin && (
+          <NavButton label="Eventos"    path="/eventos"    icon={CelebrationOutlinedIcon} />
+        )}
         {isOrganizador && (
-          <NavButton label="Validação" path="/penalidades" icon={WarningAmberOutlinedIcon} />
+          <NavButton label="Edições"    path="/edicoes"    icon={CalendarMonthOutlinedIcon} />
+        )}
+        {isOrganizador && (
+          <NavButton label="Equipes"    path="/equipes"    icon={GroupOutlinedIcon} />
+        )}
+        {isOrganizador && (
+          <NavButton label="Baterias"   path="/baterias"   icon={BoltOutlinedIcon} />
+        )}
+        {isOrganizador && (
+          <NavButton label="Validação"  path="/penalidades" icon={WarningAmberOutlinedIcon} />
         )}
       </Stack>
 

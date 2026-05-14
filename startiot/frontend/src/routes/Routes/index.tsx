@@ -8,6 +8,8 @@ import { EmConstrucaoPage } from '../../pages/EmConstrucao/EmConstrucao';
 import { EquipesPage } from '../../pages/Equipes/Equipes';
 import { BateriasPage } from '../../pages/Baterias/Baterias';
 import { PenalidadesPage } from '../../pages/Penalidades/Penalidades';
+import { EventosPage } from '../../pages/Eventos/Eventos';
+import { EdicoesPage } from '../../pages/Edicoes/Edicoes';
 import MainLayout from '../../layout/MainLayout';
 import { getSession, type PerfilUsuario } from '../../services/auth';
 
@@ -56,9 +58,8 @@ export const AppRoutes = () => {
           <Route path="/baterias"      element={<ProfileRoute path="/baterias"><BateriasPage /></ProfileRoute>} />
           <Route path="/penalidades"   element={<ProfileRoute path="/penalidades"><PenalidadesPage /></ProfileRoute>} />
           <Route path="/corridas"      element={<ProfileRoute path="/corridas"><Navigate to="/baterias" /></ProfileRoute>} />
-          <Route path="/eventos"       element={<ProfileRoute path="/eventos"><EmConstrucaoPage titulo="Gestão de Eventos" /></ProfileRoute>} />
-          {/* @TODO: Implementar módulo completo de Gestão de Edições (criar, editar, ciclo de vida de status) */}
-          <Route path="/edicoes"       element={<ProfileRoute path="/edicoes"><EmConstrucaoPage titulo="Gestão de Edições" /></ProfileRoute>} />
+          <Route path="/eventos"       element={<ProfileRoute path="/eventos"><EventosPage /></ProfileRoute>} />
+          <Route path="/edicoes"       element={<ProfileRoute path="/edicoes"><EdicoesPage /></ProfileRoute>} />
           <Route path="/membros"       element={<ProfileRoute path="/membros"><EmConstrucaoPage titulo="Gestão de Membros" /></ProfileRoute>} />
           <Route path="/carrinhos"     element={<ProfileRoute path="/carrinhos"><EmConstrucaoPage titulo="Vistoria Técnica de Carrinhos" /></ProfileRoute>} />
         </Route>
