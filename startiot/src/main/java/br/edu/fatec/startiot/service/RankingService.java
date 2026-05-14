@@ -56,7 +56,13 @@ public class RankingService {
                     var equipe = registros.get(0).getEquipe();
                     return calcularItem(equipe.getId(), equipe.getNome(), equipe.getCurso(), registros, baterias);
                 })
-                .sorted(Comparator.comparingDouble(RankingItemResponse::ultimoTempo))
+                .sorted(Comparator
+                        .<RankingItemResponse>comparingInt(item ->
+                                item.porBateria().stream()
+                                        .mapToInt(BateriaTempoItem::bateriaNumero)
+                                        .max().orElse(0))
+                        .reversed()
+                        .thenComparingDouble(RankingItemResponse::ultimoTempo))
                 .map(item -> new RankingItemResponse(
                         posicao.getAndIncrement(),
                         item.equipeId(),
