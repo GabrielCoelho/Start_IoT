@@ -135,7 +135,7 @@ public class BateriaService {
     }
 
     private void aplicarCorte(Bateria bateria, int posicaoCorte) {
-        List<RegistroTempo> tempos = registroTempoRepository.findTemposValidadosPorBateria(bateria.getId());
+        List<RegistroTempo> tempos = registroTempoRepository.findChegadasPorBateria(bateria.getId());
 
         // Melhor tempo por equipe
         Map<Long, Double> melhorPorEquipe = tempos.stream()

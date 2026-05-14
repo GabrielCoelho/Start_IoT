@@ -41,6 +41,12 @@ public interface RegistroTempoRepository extends JpaRepository<RegistroTempo, Lo
     List<RegistroTempo> findTemposValidadosPorBateria(@Param("bateriaId") Long bateriaId);
 
     @Query("SELECT rt FROM RegistroTempo rt " +
+           "JOIN FETCH rt.equipe e " +
+           "WHERE rt.corrida.bateria.id = :bateriaId " +
+           "AND rt.tipoRegistro = 'CHEGADA'")
+    List<RegistroTempo> findChegadasPorBateria(@Param("bateriaId") Long bateriaId);
+
+    @Query("SELECT rt FROM RegistroTempo rt " +
            "JOIN FETCH rt.corrida c " +
            "JOIN FETCH c.bateria b " +
            "JOIN FETCH rt.equipe e " +
