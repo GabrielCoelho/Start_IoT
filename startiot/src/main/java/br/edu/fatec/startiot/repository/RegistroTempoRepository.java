@@ -26,6 +26,7 @@ public interface RegistroTempoRepository extends JpaRepository<RegistroTempo, Lo
            "JOIN rt.corrida c JOIN c.bateria b " +
            "WHERE b.edicao.id = :edicaoId " +
            "AND rt.validado = true " +
-           "AND rt.tipoRegistro = 'CHEGADA'")
+           "AND rt.tipoRegistro = 'CHEGADA' " +
+           "AND c.status = 'FINALIZADA'")
     List<RegistroTempo> findTemposValidadosPorEdicao(@Param("edicaoId") Long edicaoId);
 }

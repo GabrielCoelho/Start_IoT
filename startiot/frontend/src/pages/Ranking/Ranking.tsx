@@ -1,8 +1,3 @@
-// @TODO: Atualizar lógica de ranking (frontend + backend) conforme regulamento da Descida da Ladeira:
-//        - Critério de desempate, penalidades, categorias, etc.
-//        - Verificar se RankingService.calcularRanking precisa filtrar por corridas FINALIZADAS.
-//        - Avaliar se o ranking deve exibir separado por bateria ou consolidado da edição.
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert, Box, Chip, CircularProgress, IconButton, MenuItem,
