@@ -6,7 +6,7 @@ import {
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 
 import { listarEventos, type EventoResponse } from '../../services/eventos';
@@ -137,7 +137,7 @@ const RegistroRow: React.FC<RegistroRowProps> = ({ registro, onAtualizado }) => 
             <Tooltip title="Remover penalidade">
               <span>
                 <Button size="small" variant="outlined" color="error"
-                  startIcon={removendo ? <CircularProgress size={12} /> : <DeleteOutlineIcon />}
+                  startIcon={removendo ? <CircularProgress size={12} /> : <DeleteOutlinedIcon />}
                   disabled={removendo || salvando}
                   onClick={handleRemover}
                   sx={{ fontWeight: 700, fontSize: '0.75rem' }}>

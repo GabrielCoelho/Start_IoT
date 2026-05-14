@@ -1,5 +1,3 @@
-// @TODO: Pré-carregar evento e edição automaticamente (detectar EM_ANDAMENTO),
-//        igual ao padrão adotado em Baterias, Cronometragem e Ranking.
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -105,19 +103,44 @@ const ContextSelector: React.FC<ContextSelectorProps> = ({ edicaoId, onEdicaoCha
   const [edicoes, setEdicoes] = useState<EdicaoResponse[]>([]);
   const [eventoId, setEventoId] = useState<number | ''>('');
 
+  // Carga inicial com auto-detecção de edição EM_ANDAMENTO
   useEffect(() => {
-    listarEventos().then(setEventos).catch(() => {});
+    listarEventos().then(async (evs) => {
+      setEventos(evs);
+
+      for (const ev of evs) {
+        try {
+          const eds = await listarEdicoesPorEvento(ev.id);
+          const ativa = eds.find((e) => e.status === 'EM_ANDAMENTO');
+          if (ativa) {
+            setEventoId(ev.id);
+            setEdicoes(eds);
+            onEdicaoChange(ativa.id);
+            return;
+          }
+        } catch {}
+      }
+
+      // Nenhuma edição ativa — auto-seleciona o evento se houver apenas um
+      if (evs.length === 1) {
+        setEventoId(evs[0].id);
+        listarEdicoesPorEvento(evs[0].id).then(setEdicoes).catch(() => {});
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!eventoId) { setEdicoes([]); return; }
-    listarEdicoesPorEvento(eventoId).then(setEdicoes).catch(() => {});
-  }, [eventoId]);
+  const handleEventoChange = (id: number) => {
+    setEventoId(id);
+    setEdicoes([]);
+    onEdicaoChange(0 as any);
+    listarEdicoesPorEvento(id).then(setEdicoes).catch(() => {});
+  };
 
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
       <TextField select fullWidth label="Evento" value={eventoId}
-        onChange={(e) => { setEventoId(Number(e.target.value)); onEdicaoChange(0 as any); }}
+        onChange={(e) => handleEventoChange(Number(e.target.value))}
         size="small"
       >
         {eventos.map((ev) => <MenuItem key={ev.id} value={ev.id}>{ev.nome}</MenuItem>)}
