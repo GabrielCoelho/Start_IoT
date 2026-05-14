@@ -140,7 +140,7 @@ class RegistroTempoServiceTest {
         when(registroTempoRepository.findById(1L)).thenReturn(Optional.of(registro));
         when(registroTempoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        RegistroTempoResponse response = registroTempoService.validar(1L);
+        RegistroTempoResponse response = registroTempoService.validar(1L, null);
 
         assertThat(response.validado()).isTrue();
     }
@@ -150,7 +150,7 @@ class RegistroTempoServiceTest {
         RegistroTempo registro = buildRegistro(1L, true);
         when(registroTempoRepository.findById(1L)).thenReturn(Optional.of(registro));
 
-        assertThatThrownBy(() -> registroTempoService.validar(1L))
+        assertThatThrownBy(() -> registroTempoService.validar(1L, null))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("validado");
     }
