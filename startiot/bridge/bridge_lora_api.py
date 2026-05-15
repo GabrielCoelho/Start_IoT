@@ -141,7 +141,7 @@ class LoRaBridge:
         # Tentar achar edicao EM_ANDAMENTO em qualquer evento
         edicao_ativa = None
         for ev in eventos:
-            status, edicoes = self._http('GET', f"/api/eventos/{ev['id']}/edicoes")
+            status, edicoes = self._http('GET', f"/api/edicoes?eventoId={ev['id']}")
             if status == 200 and isinstance(edicoes, list):
                 for ed in edicoes:
                     if ed.get('status') == 'EM_ANDAMENTO':
