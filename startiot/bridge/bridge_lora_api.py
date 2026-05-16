@@ -10,6 +10,7 @@ import serial
 import requests
 import json
 import time
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -120,12 +121,19 @@ class LoRaBridge:
     
     # ===== BUZINA =====
     def _acionar_buzina(self):
-        """Aciona buzina por 1 segundo via Serial -> ESP32_Topo"""
-        print("🔔 BUZINA!")
-        self.serial.write((json.dumps({"cmd": "BUZINA_ON"}) + '\n').encode())
-        time.sleep(1.0)
-        self.serial.write((json.dumps({"cmd": "BUZINA_OFF"}) + '\n').encode())
-    
+        """Aciona buzina em background (não bloqueia resposta)"""
+        def buzina():
+            time.sleep(0.1)  # espera resposta sair primeiro
+            print("🔔 BUZINA ON!")
+            self.serial.write((json.dumps({"cmd": "BUZINA_ON"}) + '\n').encode())
+            time.sleep(2.0)
+            self.serial.write((json.dumps({"cmd": "BUZINA_OFF"}) + '\n').encode())
+            print("🔔 BUZINA OFF")
+
+        t = threading.Thread(target=buzina, daemon=True)
+        t.start()
+
+
     # ===== ENDPOINT CUSTOM: /cronometragem/atual =====
     def _buscar_corrida_atual(self):
         """
