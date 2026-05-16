@@ -1,1 +1,9 @@
-fatec/startIoT/App.class
+br/edu/fatec/startiot/domain/entity/BateriaEliminacao.class
+br/edu/fatec/startiot/dto/response/BateriaInfo.class
+br/edu/fatec/startiot/dto/request/ValidarTempoRequest.class
+br/edu/fatec/startiot/service/EdicaoService$1.class
+br/edu/fatec/startiot/domain/enums/TipoPenalidade.class
+br/edu/fatec/startiot/dto/response/BateriaTempoItem.class
+br/edu/fatec/startiot/dto/request/FinalizarBateriaRequest.class
+br/edu/fatec/startiot/dto/request/PenalidadeRequest.class
+br/edu/fatec/startiot/repository/BateriaEliminacaoRepository.class
